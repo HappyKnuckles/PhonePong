@@ -1,6 +1,6 @@
 module.exports = {
-    VSCALE: 250.0,        // scale velocity
-    FREQUENCY_MS: 200,    // frequency of updates to hosts in milliseconds
+    VSCALE: 300.0,        // scale velocity
+    FREQUENCY_MS: 30,    // frequency of updates to hosts in milliseconds
     OUTERBOUND: 140,      // y boundary for scoring
     INNERBOUND: 70,       // y boundary for collision checks
     HEADLESS: false,      // test without hosts
