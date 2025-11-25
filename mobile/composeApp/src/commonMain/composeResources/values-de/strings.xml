@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Ping Pong Online</string>
+    <string name="choose_player">Wähle deinen Spieler</string>
+    <string name="player_1">Spieler 1</string>
+    <string name="player_2">Spieler 2</string>
+    <string name="game_start_note">Hinweis: Das Spiel startet automatisch,\nsobald beide Spieler verbunden sind.</string>
+    
+    <string name="you_are_player">Du bist Spieler %d</string>
+    <string name="waiting_for_second_player">Warte auf zweiten Spieler...</string>
+    
+    <string name="connected">Verbunden</string>
+    <string name="connecting">Verbinden...</string>
+    <string name="disconnected">Getrennt</string>
+    <string name="error">Fehler</string>
+    <string name="disconnect_button">Trennen</string>
+</resources>
