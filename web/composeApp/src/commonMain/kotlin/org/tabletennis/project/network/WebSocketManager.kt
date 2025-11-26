@@ -33,7 +33,7 @@ data class ScoreEvent(
 
 class WebSocketManager {
 
-    private val serverUrl = "131.159.222.93"
+    private val serverUrl = "localhost"
     private val serverPort = 3000
 
     private val _bothPlayersConnected = MutableStateFlow(false)
