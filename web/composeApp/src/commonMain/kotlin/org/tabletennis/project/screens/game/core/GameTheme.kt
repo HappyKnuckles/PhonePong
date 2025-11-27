@@ -27,5 +27,5 @@ object TableSpecs {
     const val LEG_INSET = 50f
     const val LEG_WIDTH = 12f
     const val BALL_RADIUS = 10f
-    const val NET_OVERHANG = 20f
+    const val NET_OVERHANG = 15f
 }

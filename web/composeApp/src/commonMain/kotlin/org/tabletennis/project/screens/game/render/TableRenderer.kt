@@ -4,6 +4,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import org.tabletennis.project.screens.game.core.GameColors
@@ -12,26 +13,35 @@ import org.tabletennis.project.screens.game.core.TableSpecs
 typealias Projector = (x: Float, y: Float, z: Float) -> Offset
 
 /**
- * Draws the complete Ping Pong table entity: Legs, Shadow, Body, and Net.
+ * Draws the static parts of the table (Legs, Shadow, Surface).
+ * DOES NOT DRAW THE NET.
  */
-fun DrawScope.drawTable(
+fun DrawScope.drawTableBase(
     project: Projector,
     halfW: Float,
-    halfL: Float,
-    netHeight: Float
+    halfL: Float
 ) {
     val floorY = -TableSpecs.TABLE_HEIGHT_FROM_GROUND
     val inset = TableSpecs.LEG_INSET
     val thickness = TableSpecs.TABLE_THICKNESS
 
-    // LEGS
+    // 1. FLOOR SHADOW
+    val s1 = project(-halfW, floorY, -halfL)
+    val s2 = project(halfW, floorY, -halfL)
+    val s3 = project(halfW, floorY, halfL)
+    val s4 = project(-halfW, floorY, halfL)
+    val shadowPath = Path().apply {
+        moveTo(s1.x, s1.y); lineTo(s2.x, s2.y); lineTo(s3.x, s3.y); lineTo(s4.x, s4.y); close()
+    }
+    drawPath(shadowPath, GameColors.Shadow)
+
+    // 2. LEGS
     val legsCoords = listOf(
         Triple(-halfW + inset, floorY, -halfL + inset),
         Triple(halfW - inset, floorY, -halfL + inset),
         Triple(-halfW + inset, floorY, halfL - inset),
         Triple(halfW - inset, floorY, halfL - inset)
     )
-
     legsCoords.forEach { (lx, ly, lz) ->
         val start = project(lx, 0f, lz)
         val end = project(lx, ly, lz)
@@ -40,37 +50,22 @@ fun DrawScope.drawTable(
         drawLine(GameColors.LegHighlight, start + hl, end + hl, strokeWidth = TableSpecs.LEG_WIDTH / 3)
     }
 
-    // FLOOR SHADOW
-    val s1 = project(-halfW, floorY, -halfL)
-    val s2 = project(halfW, floorY, -halfL)
-    val s3 = project(halfW, floorY, halfL)
-    val s4 = project(-halfW, floorY, halfL)
-
-    val shadowPath = Path().apply {
-        moveTo(s1.x, s1.y); lineTo(s2.x, s2.y); lineTo(s3.x, s3.y); lineTo(s4.x, s4.y); close()
-    }
-    drawPath(shadowPath, GameColors.Shadow)
-
-    // TABLE BODY
-    // Top Corners (Y = 0)
+    // 3. TABLE BODY
     val t1 = project(-halfW, 0f, -halfL)
     val t2 = project(halfW, 0f, -halfL)
     val t3 = project(halfW, 0f, halfL)
     val t4 = project(-halfW, 0f, halfL)
 
-    // Bottom Corners (Y = -thickness)
     val b1 = project(-halfW, -thickness, -halfL)
     val b2 = project(halfW, -thickness, -halfL)
     val b3 = project(halfW, -thickness, halfL)
     val b4 = project(-halfW, -thickness, halfL)
 
-    // Draw Bottom Panel
     val tableBottomPath = Path().apply {
         moveTo(b1.x, b1.y); lineTo(b2.x, b2.y); lineTo(b3.x, b3.y); lineTo(b4.x, b4.y); close()
     }
     drawPath(tableBottomPath, GameColors.TableBottom)
 
-    // Draw Sides
     val frontSide = Path().apply { moveTo(t1.x, t1.y); lineTo(t2.x, t2.y); lineTo(b2.x, b2.y); lineTo(b1.x, b1.y); close() }
     val backSide = Path().apply { moveTo(t3.x, t3.y); lineTo(t4.x, t4.y); lineTo(b4.x, b4.y); lineTo(b3.x, b3.y); close() }
     val leftSide = Path().apply { moveTo(t4.x, t4.y); lineTo(t1.x, t1.y); lineTo(b1.x, b1.y); lineTo(b4.x, b4.y); close() }
@@ -81,7 +76,6 @@ fun DrawScope.drawTable(
     drawPath(leftSide, GameColors.TableSide)
     drawPath(rightSide, GameColors.TableSide)
 
-    // Draw Top Surface
     val tablePath = Path().apply {
         moveTo(t1.x, t1.y); lineTo(t2.x, t2.y); lineTo(t3.x, t3.y); lineTo(t4.x, t4.y); close()
     }
@@ -92,48 +86,97 @@ fun DrawScope.drawTable(
     drawPath(tablePath, tableGradient)
     drawPath(tablePath, Color.White, style = Stroke(width = 2f))
 
-    // Draw Center Line
     val cStart = project(0f, 0f, -halfL)
     val cEnd = project(0f, 0f, halfL)
     drawLine(GameColors.CenterLine, cStart, cEnd, strokeWidth = 2f)
+}
 
-    // NET
+fun DrawScope.drawNet(
+    project: Projector,
+    halfW: Float,
+    netHeight: Float
+) {
     val netZ = 0f
-    val netLeftX = -halfW - TableSpecs.NET_OVERHANG
-    val netRightX = halfW + TableSpecs.NET_OVERHANG
+    val netThickness = 10f
+
+    val zFront = netZ - (netThickness / 2)
+    val zBack = netZ + (netThickness / 2)
+
+    val netOverhang = TableSpecs.NET_OVERHANG
+    val netLeftX = -halfW - netOverhang
+    val netRightX = halfW + netOverhang
+
+    // NET POSTS
+    val pLeftBotFront = project(netLeftX, 0f, zFront)
+    val pLeftTopFront = project(netLeftX, netHeight, zFront)
+
+    // BOTTOM TAPE
+    val tapeBotLeftFront = project(netLeftX, 0f, zFront)
+    val tapeBotRightFront = project(netRightX, 0f, zFront)
+
+    drawLine(
+        GameColors.NetTape.copy(alpha = 0.9f),
+        tapeBotLeftFront,
+        tapeBotRightFront,
+        strokeWidth = 2f
+    )
+
+    drawLine(GameColors.NetPost, pLeftBotFront, pLeftTopFront, strokeWidth = 8f, cap = StrokeCap.Square)
+
+    val pRightBotFront = project(netRightX, 0f, zFront)
+    val pRightTopFront = project(netRightX, netHeight, zFront)
+
+    drawLine(GameColors.NetPost, pRightBotFront, pRightTopFront, strokeWidth = 8f, cap = StrokeCap.Square)
+
+    // MESH
+    val meshColor = GameColors.NetMesh
 
     // Vertical Mesh Lines
     for (i in 1 until 20) {
         val fraction = i.toFloat() / 20
         val xPos = netLeftX + (netRightX - netLeftX) * fraction
         drawLine(
-            GameColors.NetMesh,
+            meshColor,
             project(xPos, netHeight, netZ),
             project(xPos, 0f, netZ),
-            strokeWidth = 1f
+            strokeWidth = 0.8f
         )
     }
-
     // Horizontal Mesh Lines
     for (i in 1 until 5) {
         val fraction = i.toFloat() / 5
         val yPos = netHeight * fraction
         drawLine(
-            GameColors.NetMesh,
+            meshColor,
             project(netLeftX, yPos, netZ),
             project(netRightX, yPos, netZ),
-            strokeWidth = 1f
+            strokeWidth = 0.8f
         )
     }
 
-    // Posts & Tape
-    val pLeftBot = project(netLeftX, 0f, netZ)
-    val pRightBot = project(netRightX, 0f, netZ)
-    val pLeftTop = project(netLeftX, netHeight, netZ)
-    val pRightTop = project(netRightX, netHeight, netZ)
+    // TOP TAPE
+    val tapeTopLeftFront  = project(netLeftX, netHeight, zFront)
+    val tapeTopRightFront = project(netRightX, netHeight, zFront)
+    val tapeTopRightBack  = project(netRightX, netHeight, zBack)
+    val tapeTopLeftBack   = project(netLeftX, netHeight, zBack)
 
-    drawLine(GameColors.NetPost, pLeftBot, pLeftTop, strokeWidth = 6f)
-    drawLine(GameColors.NetPost, pRightBot, pRightTop, strokeWidth = 6f)
-    drawLine(GameColors.NetTape, pLeftTop, pRightTop, strokeWidth = 3f)
-    drawLine(GameColors.NetTape, pLeftBot, pRightBot, strokeWidth = 2f)
+    val tapePath = Path().apply {
+        moveTo(tapeTopLeftFront.x, tapeTopLeftFront.y)
+        lineTo(tapeTopRightFront.x, tapeTopRightFront.y)
+        lineTo(tapeTopRightBack.x, tapeTopRightBack.y)
+        lineTo(tapeTopLeftBack.x, tapeTopLeftBack.y)
+        close()
+    }
+
+    drawPath(tapePath, GameColors.NetTape)
+
+    drawLine(
+        GameColors.NetTape,
+        tapeTopLeftFront,
+        tapeTopRightFront,
+        strokeWidth = 4f
+    )
+
+    drawLine(Color.Gray, tapeTopLeftFront, tapeTopLeftBack, strokeWidth = 1f)
+    drawLine(Color.Gray, tapeTopRightFront, tapeTopRightBack, strokeWidth = 1f)
 }
