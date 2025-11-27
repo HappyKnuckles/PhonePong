@@ -1,7 +1,10 @@
-package org.tabletennis.project.game
+package org.tabletennis.project.screens
 
 import androidx.compose.runtime.*
+import org.tabletennis.project.screens.game.ui.screens.GameScreen
 import org.tabletennis.project.network.WebSocketManager
+import org.tabletennis.project.screens.onboarding.PlayerSelectionScreen
+import org.tabletennis.project.screens.onboarding.WaitingScreen
 
 @Composable
 fun GameFlow() {
@@ -48,7 +51,7 @@ fun GameFlow() {
         GameState.PLAYING -> {
             if (playerNumber > 0) {
                 // Direct Composable call (updated from previous step)
-                PingPongTable(
+                GameScreen(
                     webSocketManager = webSocketManager,
                     playerNumber = playerNumber
                 )

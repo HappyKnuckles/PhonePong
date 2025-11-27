@@ -1,3 +1,5 @@
+package org.tabletennis.project.screens.game.logic
+
 import androidx.compose.ui.geometry.Offset
 
 class GameCoordinates {
