@@ -1,4 +1,4 @@
-package org.tabletennis.project.game
+package org.tabletennis.project.screens.onboarding
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

@@ -1,4 +1,4 @@
-package org.tabletennis.project.game
+package org.tabletennis.project.screens
 
 
 enum class GameState {
