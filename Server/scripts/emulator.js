@@ -11,7 +11,7 @@ const SWING_SPEED = 1.05;
 const SWING_COOLDOWN = 250;
 
 // 10% chance to miss a ball
-const MISS_CHANCE = 0.001;
+const MISS_CHANCE = 0.01;
 
 // --- STATE ---
 let ball = { x: 0, y: 0, v: 0 };

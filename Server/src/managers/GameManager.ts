@@ -42,7 +42,11 @@ class GameManager {
     this.state.resetBall();
     this.net.broadcast('start');
 
+    this.state.currentServer = 1;
     this.state.swingToStartPlayer = 1;
+    this.state.ball.y = -99;
+    this.state.ball.d = -1;
+
     this.state.isRunning = true;
 
     console.log('😎 Game Initialized - Waiting for Player 1 Swing');
@@ -87,8 +91,8 @@ class GameManager {
 
     if (this.state.swingToStartPlayer === playerNum) {
       console.log('🏁 Serve Hit!');
-      this.applyHit(speed, null);
-      this.state.swingToStartPlayer = 0; 
+      this.applyHit(speed, null, true);
+      this.state.swingToStartPlayer = 0;
       return;
     }
 
@@ -97,7 +101,7 @@ class GameManager {
 
       if (playerNum === targetPlayer) {
         if (this.physics.isCollision(this.state.ball.y)) {
-          this.applyHit(speed, null);
+          this.applyHit(speed, null, false);
           this.net.sendSound(playerNum, 'hit');
         }
       }
@@ -105,18 +109,32 @@ class GameManager {
   }
 
   private updatePhysics(): void {
-    this.physics.update(this.state.ball, this.state.lastHitDirection);
+    const result = this.physics.update(this.state.ball, this.state.lastHitDirection);
+
+    if (result === 'FLOOR_HIT') {
+      this.handleSideMiss();
+    }
   }
 
-  private applyHit(velocity: number, specificGoal: number | null): void {
-    this.physics.applyHit(this.state.ball, velocity, specificGoal);
+  private handleSideMiss(): void {
+    const winner = this.getTargetPlayer();
+    console.log(`⚠️ Ball Hit Floor (OUT)! Winner: Player ${winner}`);
+
+    if (winner === 1) this.state.score.p1++;
+    else this.state.score.p2++;
+
+    this.handleScore();
+  }
+
+  private applyHit(velocity: number, specificGoal: number | null, isServe: boolean = false): void {
+    this.physics.applyHit(this.state.ball, velocity, specificGoal, isServe);
     this.state.lastHitDirection = this.state.ball.d;
     this.notifyCollision();
   }
 
   private checkRules(): void {
     if (Math.abs(this.state.ball.y) >= config.OUTERBOUND) {
-      const scorer = this.getFromPlayer(); // 1 or 2
+      const scorer = this.getFromPlayer();
 
       if (scorer === 1) this.state.score.p1++;
       else this.state.score.p2++;
@@ -126,28 +144,40 @@ class GameManager {
   }
 
   private handleScore(): void {
-    console.log(`🏆 Score: P1:${this.state.score.p1} - P2:${this.state.score.p2}`);
+    const { p1, p2 } = this.state.score;
+    console.log(`🏆 Score: P1:${p1} - P2:${p2}`);
+
+    const totalPoints = p1 + p2;
+    if (totalPoints % 2 === 0) {
+      this.state.currentServer = this.state.currentServer === 1 ? 2 : 1;
+    }
+
+    const server = this.state.currentServer;
 
     this.net.sendJSON('host1', {
       type: 'score',
-      score: [this.state.score.p1, this.state.score.p2],
-      message: 'Swing to start',
+      score: [p1, p2],
+      message: server === 1 ? 'Swing to start' : 'Opponent starts',
     });
     this.net.sendJSON('host2', {
       type: 'score',
-      score: [this.state.score.p2, this.state.score.p1],
-      message: 'Opponent starts',
+      score: [p2, p1],
+      message: server === 2 ? 'Swing to start' : 'Opponent starts',
     });
 
     this.state.hitTimeout = Date.now() + config.USE_TIMEOUT;
 
     this.state.resetBall();
+    this.state.swingToStartPlayer = server;
 
-    const nextServer = this.getTargetPlayer();
-    this.state.swingToStartPlayer = nextServer as 1 | 2;
+    if (server === 1) {
+      this.state.ball.y = -99;
+      this.state.ball.d = -1;
+    } else {
+      this.state.ball.y = 99;
+      this.state.ball.d = 1;
+    }
 
-    this.state.ball.y = nextServer === 1 ? -99 : 99;
-    this.state.ball.d = nextServer === 1 ? 1 : -1;
     this.state.lastHitDirection = this.state.ball.d;
   }
 

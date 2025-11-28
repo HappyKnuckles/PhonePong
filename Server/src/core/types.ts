@@ -9,6 +9,8 @@ export interface Ball {
   // New fields for trajectory calculation
   startY: number;   // Where the ball was hit from
   bounceY: number;  // Calculated landing spot (Depth)
-  state: 'FLIGHT' | 'BOUNCE';
+  state: 'FLIGHT' | 'BOUNCE' | 'SERVE_FLIGHT';
   lastUpdate: number;
 }
+
+export type PhysicsResult = 'CONTINUE' | 'BOUNCE' | 'FLOOR_HIT';
