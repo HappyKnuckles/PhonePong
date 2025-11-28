@@ -5,12 +5,11 @@ const PORT = 3000;
 const SERVER_URL = `ws://localhost:${PORT}`;
 
 // HIT ZONES
-const HIT_THRESHOLD = 80;
+const HIT_THRESHOLD = 95;
 
-const SWING_SPEED = 1.05;
 const SWING_COOLDOWN = 250;
 
-// 10% chance to miss a ball
+// 10% chance to miss a ball (Whiff)
 const MISS_CHANCE = 0.01;
 
 // --- STATE ---
@@ -59,6 +58,7 @@ hostClient.on('message', (data) => {
 // --- HELPER: Random Gyro Data ---
 function getRandomSensorData() {
   return {
+    speed: Math.random() * 0.5 + 1,
     gamma: Math.random() * 90 - 45,
     beta: Math.random() * 60 - 30,
   };
@@ -75,7 +75,7 @@ function swing(client, playerName) {
 
     client.send(
       JSON.stringify({
-        speed: SWING_SPEED,
+        speed: sensor.speed,
         gamma: sensor.gamma,
         beta: sensor.beta,
       })
@@ -115,6 +115,12 @@ function attemptServe() {
 
 // --- MAIN LOOP ---
 setInterval(() => {
+  const isEdgeBounce = Math.abs(ball.y) >= 99;
+
+  const shouldHit = isEdgeBounce || Math.random() < 0.05;
+
+  if (!shouldHit) return;
+
   if (dy < -0.1 && ball.y < -HIT_THRESHOLD && ball.y > -110) {
     tryToSwing(p1Client, 'player1');
   }

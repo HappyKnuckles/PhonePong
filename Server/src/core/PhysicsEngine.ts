@@ -50,7 +50,11 @@ class PhysicsEngine {
             ball.startY = ball.y;
             ball.z = 0;
             const tableLen = config.OUTERBOUND;
-            const nextBounceDepth = tableLen * 0.75;
+
+            const nextBounceDepth = tableLen * 0.6;
+
+            ball.v = ball.v * 0.85;
+
             ball.bounceY = nextBounceDepth * ball.d;
             return 'CONTINUE';
           }
