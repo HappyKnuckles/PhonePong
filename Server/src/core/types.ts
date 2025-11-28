@@ -1,8 +1,14 @@
 export interface Ball {
   x: number;
-  y: number;
-  v: number;          // Velocity magnitude (normalized usually)
-  goal: number;       // Target X coordinate
-  d: number;          // Direction: -1 (Up/P1) or 1 (Down/P2)
-  lastUpdate: number; // Timestamp (ms)
+  y: number; // Depth (Table Length)
+  z: number; // Height (Up/Down) - This is the "Y Animation"
+  v: number; // Velocity
+  d: number; // Direction (1 or -1)
+  goal: number; // Target X
+
+  // New fields for trajectory calculation
+  startY: number;   // Where the ball was hit from
+  bounceY: number;  // Calculated landing spot (Depth)
+  state: 'FLIGHT' | 'BOUNCE';
+  lastUpdate: number;
 }

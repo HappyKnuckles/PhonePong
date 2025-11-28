@@ -7,11 +7,11 @@ const SERVER_URL = `ws://localhost:${PORT}`;
 // HIT ZONES
 const HIT_THRESHOLD = 80;
 
-const SWING_SPEED = 1.50;
+const SWING_SPEED = 1.05;
 const SWING_COOLDOWN = 250;
 
 // 10% chance to miss a ball
-const MISS_CHANCE = 0.1;
+const MISS_CHANCE = 0.001;
 
 // --- STATE ---
 let ball = { x: 0, y: 0, v: 0 };
