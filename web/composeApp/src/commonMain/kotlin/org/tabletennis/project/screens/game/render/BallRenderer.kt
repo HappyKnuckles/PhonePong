@@ -10,15 +10,21 @@ import org.tabletennis.project.screens.game.core.TableSpecs
 fun DrawScope.drawBall(
     project: Projector,
     ballX: Float,
-    ballY: Float,
+    ballZ: Float,
     ballHeight: Float
 ) {
     val radius = TableSpecs.BALL_RADIUS
 
-    val shadowPos = project(ballX + 5f, 0f, ballY + 5f)
-    drawCircle(GameColors.BallShadow, radius * 0.8f, shadowPos)
+    val shadowPos = project(ballX, 0f, ballZ)
+    val shadowScale = (1.0f - (ballHeight / 200f)).coerceIn(0.5f, 1.0f)
+    val shadowAlpha = (0.5f - (ballHeight / 400f)).coerceIn(0.1f, 0.5f)
 
-    val visualPos = project(ballX, ballHeight, ballY)
+    drawCircle(
+        color = Color.Black.copy(alpha = shadowAlpha),
+        radius = radius * shadowScale,
+        center = shadowPos
+    )
+    val visualPos = project(ballX, ballHeight, ballZ)
     val gradient = Brush.radialGradient(
         colors = listOf(Color.White, Color(0xFFDDDDDD), Color(0xFFAAAAAA)),
         center = Offset(visualPos.x - radius / 3, visualPos.y - radius / 3),

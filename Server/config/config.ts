@@ -1,5 +1,5 @@
 export default {
-  VSCALE: 300.0,        // scale velocity
+  VSCALE: 150.0,        // scale velocity
   FREQUENCY_MS: 30,     // frequency of updates to hosts in milliseconds
   OUTERBOUND: 140,      // y boundary for scoring
   INNERBOUND: 70,       // y boundary for collision checks

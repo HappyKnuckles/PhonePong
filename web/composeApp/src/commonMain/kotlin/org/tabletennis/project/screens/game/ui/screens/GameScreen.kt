@@ -30,7 +30,8 @@ fun GameScreen(
     var scoreMessage by remember { mutableStateOf("") }
 
     var ballX by remember { mutableFloatStateOf(0f) }
-    var ballY by remember { mutableFloatStateOf(0f) }
+    var ballDepth by remember { mutableFloatStateOf(0f) }
+    var ballHeight by remember { mutableFloatStateOf(0f) }
     var isMovingToPositive by remember { mutableStateOf(true) }
 
     var currentBounceDist by remember {
@@ -43,23 +44,17 @@ fun GameScreen(
 
     LaunchedEffect(coordinatesEvent) {
         coordinatesEvent?.let { event ->
-            val (newX, newZ) = GameCoordinates.mapGameToTable(event.x, event.y)
+            val (newX, newDepth) = GameCoordinates.mapGameToTable(event.x, event.y)
 
-            if (newZ != ballY) {
-                isMovingToPositive = newZ > ballY
+            if (newDepth != ballDepth) {
+                isMovingToPositive = newDepth > ballDepth
             }
 
-            if ((ballY > 0 && newZ <= 0) || (ballY < 0 && newZ >= 0)) {
-                val halfLength = GameCoordinates.TableDims.LENGTH / 2
 
-                val minBounce = 30f
-                val maxBounce = halfLength * 0.6f
-
-                currentBounceDist = minBounce + Random.nextFloat() * (maxBounce - minBounce)
-            }
 
             ballX = newX
-            ballY = newZ
+            ballDepth = newDepth
+            ballHeight = event.z
             scoreMessage = ""
         }
     }
@@ -106,24 +101,29 @@ fun GameScreen(
                     onDrawBehind {
                         drawTableBase(project, halfW, halfL)
 
-                        val relativeBallZ = if (playerNumber == 2) -ballY else ballY
+                        val relativeBallDepth = if (playerNumber == 2) -ballDepth else ballDepth
 
                         val doDrawBall = {
-                            if (ballX != 0f || ballY != 0f) {
-                                val dynamicHeight = BallPhysics.calculateBallHeight(
+                            if (ballX != 0f || ballDepth != 0f) {
+//                                val dynamicHeight = BallPhysics.calculateBallHeight(
+//                                    ballX = ballX,
+//                                    ballZ = ballZ,
+//                                    isMovingToPositive = isMovingToPositive,
+//                                    bounceDist = currentBounceDist,
+//                                    halfTableLength = halfL,
+//                                    halfTableWidth = halfW,
+//                                    ballRadius = TableSpecs.BALL_RADIUS
+//                                )
+                                drawBall(
+                                    project = project,
                                     ballX = ballX,
-                                    ballZ = ballY,
-                                    isMovingToPositive = isMovingToPositive,
-                                    bounceDist = currentBounceDist,
-                                    halfTableLength = halfL,
-                                    halfTableWidth = halfW,
-                                    ballRadius = TableSpecs.BALL_RADIUS
+                                    ballZ = ballDepth,
+                                    ballHeight = ballHeight
                                 )
-                                drawBall(project, ballX, ballY, dynamicHeight)
                             }
                         }
 
-                        if (relativeBallZ > netHeight) {
+                        if (relativeBallDepth  > netHeight) {
                             doDrawBall()
                             drawNet(project, halfW, netHeight)
                         } else {

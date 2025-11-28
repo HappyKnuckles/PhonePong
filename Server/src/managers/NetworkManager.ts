@@ -70,6 +70,7 @@ class NetworkManager {
       type: 'coordinates',
       data: {
         x: ball.x,
+        z: ball.z,
         y: ball.y,
         v: ball.v! * config.VSCALE,
         goal_x: ball.goal || 0,
