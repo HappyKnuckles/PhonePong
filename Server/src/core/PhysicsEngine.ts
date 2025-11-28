@@ -70,7 +70,6 @@ class PhysicsEngine {
 
       ball.z = BALL_RADIUS + (BOUNCE_PEAK * 4 * t * (1 - t));
 
-      // Floor clamp
       if (ball.z < 0) ball.z = 0;
     }
   }

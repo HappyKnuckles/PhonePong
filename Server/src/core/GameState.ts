@@ -24,11 +24,11 @@ export default class GameState {
   public resetBall(): void {
     this.ball = {
       x: 0,
-      y: 0,
-      z: 0,
+      y: -99,
+      z: 50,
       v: 0,
-      startY: 0,
-      bounceY: 0,
+      startY: -99,
+      bounceY: -50,
       state: 'FLIGHT',
       goal: (Math.random() - 0.5) * 1.9 * config.OUTERBOUND,
       d: -1, // Direction: -1 = Up (P1), 1 = Down (P2)
