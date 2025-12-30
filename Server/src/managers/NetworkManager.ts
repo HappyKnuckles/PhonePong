@@ -45,6 +45,8 @@ class NetworkManager {
     );
   }
 
+  // --- MESSAGING ---
+
   public broadcast(msg: string): void {
     Object.values(this.clients).forEach((client) => {
       if (client && client.readyState === WebSocket.OPEN) {
@@ -79,6 +81,80 @@ class NetworkManager {
 
     this.sendJSON('host1', data);
     this.sendJSON('host2', data);
+  }
+
+  // --- LOBBY STATE LOGIC ---
+
+  /**
+   * Returns a list of roles that are currently connected and open.
+   */
+  public getOccupiedRoles(): ClientRole[] {
+    return (Object.keys(this.clients) as ClientRole[]).filter((role) => {
+      const ws = this.clients[role];
+      return ws !== null && ws.readyState === WebSocket.OPEN;
+    });
+  }
+
+  /**
+   * Sends the list of taken spots to everyone in the lobby.
+   */
+  public broadcastLobbyState(lobbyId: string): void {
+    const occupied = this.getOccupiedRoles();
+    const message = JSON.stringify({
+      type: 'lobby_state',
+      lobbyId,
+      occupied // e.g. ['host1', 'player1']
+    });
+
+    Object.values(this.clients).forEach((client) => {
+      if (client && client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  }
+
+  public hasHost(): boolean {
+    return !!(this.clients.host1 || this.clients.host2);
+  }
+
+  /**
+   * Returns the first available player slot ('player1' or 'player2').
+   * Returns null if both slots are taken.
+   */
+  public getAvailablePlayerSlot(): 'player1' | 'player2' | null {
+    const p1 = this.clients.player1;
+    const p2 = this.clients.player2;
+
+    // Check if player1 slot is free (null or closed connection)
+    if (p1 === null || p1.readyState !== WebSocket.OPEN) {
+      return 'player1';
+    }
+    // Check if player2 slot is free
+    if (p2 === null || p2.readyState !== WebSocket.OPEN) {
+      return 'player2';
+    }
+    // Both slots taken
+    return null;
+  }
+
+  /**
+   * Returns the first available host slot ('host1' or 'host2').
+   * Returns null if both slots are taken.
+   */
+  public getAvailableHostSlot(): 'host1' | 'host2' | null {
+    const h1 = this.clients.host1;
+    const h2 = this.clients.host2;
+
+    // Check if host1 slot is free (null or closed connection)
+    if (h1 === null || h1.readyState !== WebSocket.OPEN) {
+      return 'host1';
+    }
+    // Check if host2 slot is free
+    if (h2 === null || h2.readyState !== WebSocket.OPEN) {
+      return 'host2';
+    }
+    // Both slots taken
+    return null;
   }
 
   private isValidRole(token: string): token is ClientRole {

@@ -72,6 +72,23 @@ class ControllerViewModel(
             }
         }
 
+        // Observe assigned role from server (for auto-assignment)
+        viewModelScope.launch {
+            webSocketClient.assignedRole.collect { assignedRole ->
+                if (assignedRole != null) {
+                    Log.i(TAG, "Server assigned role: $assignedRole")
+                    val role = when (assignedRole) {
+                        "player1" -> com.example.insanecrossmobilepingpongapp.model.PlayerRole.PLAYER1
+                        "player2" -> com.example.insanecrossmobilepingpongapp.model.PlayerRole.PLAYER2
+                        else -> null
+                    }
+                    if (role != null) {
+                        _state.update { it.copy(playerRole = role, token = role.token) }
+                    }
+                }
+            }
+        }
+
         // Observe incoming messages for "hit" sound
         viewModelScope.launch {
             webSocketClient.incomingMessages.collect { message ->
@@ -284,11 +301,14 @@ class ControllerViewModel(
 
     /**
      * Connect to WebSocket server.
+     * @param url WebSocket server URL
+     * @param token Token for role (use "player" for auto-assign)
+     * @param lobbyId Optional lobby ID to join
      */
-    fun connect(url: String, token: String) {
-        Log.i(TAG, "🔌 Connecting to server: $url with token: $token")
+    fun connect(url: String, token: String = "player", lobbyId: String? = null) {
+        Log.i(TAG, "🔌 Connecting to server: $url with token: $token, lobby: $lobbyId")
         _state.update { it.copy(serverUrl = url, token = token) }
-        webSocketClient.connect(url, token)
+        webSocketClient.connect(url, token, lobbyId)
     }
 
     /**
@@ -314,20 +334,53 @@ class ControllerViewModel(
     }
 
     /**
-     * Select player role and navigate to game screen.
-     * Automatically connects to the server with the appropriate token.
+     * Update lobby ID.
      */
-    fun selectPlayer(role: com.example.insanecrossmobilepingpongapp.model.PlayerRole) {
-        Log.i(TAG, "👤 Player selected: ${role.displayName}")
+    fun updateLobbyId(lobbyId: String) {
+        _state.update { it.copy(lobbyId = lobbyId) }
+    }
+
+    /**
+     * Join a lobby with a specific player role.
+     * The role must match the web host screen to avoid mirrored view.
+     */
+    fun joinLobby(lobbyId: String, role: com.example.insanecrossmobilepingpongapp.model.PlayerRole) {
+        Log.i(TAG, "🎮 Joining lobby: $lobbyId as ${role.displayName}")
         _state.update {
             it.copy(
+                lobbyId = lobbyId,
+                token = role.token,  // Use the specific player token (player1 or player2)
                 playerRole = role,
-                token = role.token,
                 currentScreen = com.example.insanecrossmobilepingpongapp.model.Screen.Waiting
             )
         }
-        // Auto-connect to server with player's token
-        connect(_state.value.serverUrl, role.token)
+        // Connect with the specific player token
+        connect(_state.value.serverUrl, role.token, lobbyId)
+    }
+
+    /**
+     * @deprecated Use joinLobby(lobbyId, role) instead
+     */
+    @Deprecated("Use joinLobby(lobbyId, role) to specify player role", ReplaceWith("joinLobby(lobbyId, role)"))
+    fun joinLobby(lobbyId: String) {
+        Log.w(TAG, "⚠️ joinLobby called without role - defaulting to PLAYER1")
+        joinLobby(lobbyId, com.example.insanecrossmobilepingpongapp.model.PlayerRole.PLAYER1)
+    }
+
+    /**
+     * Legacy method for backward compatibility.
+     * @deprecated Use joinLobby instead for auto-assignment.
+     */
+    @Deprecated("Use joinLobby for auto-assignment", ReplaceWith("joinLobby(lobbyId)"))
+    fun selectPlayer(role: com.example.insanecrossmobilepingpongapp.model.PlayerRole) {
+        Log.i(TAG, "👤 Player selected (legacy): ${role.displayName}")
+        // For backward compatibility, use the current lobby ID if set
+        val lobbyId = _state.value.lobbyId
+        if (lobbyId.isNotBlank()) {
+            joinLobby(lobbyId)
+        } else {
+            Log.w(TAG, "⚠️ No lobby ID set, cannot connect")
+        }
     }
 
     /**

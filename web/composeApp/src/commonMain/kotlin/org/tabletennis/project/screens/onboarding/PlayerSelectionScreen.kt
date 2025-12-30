@@ -13,19 +13,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.tabletennis.project.network.WebSocketManager
 
 @Composable
 fun PlayerSelectionScreen(
-    webSocketManager: WebSocketManager,
     onPlayerSelected: (Int) -> Unit
 ) {
-    var isConnecting by remember { mutableStateOf(false) }
     var selectedPlayerLabel by remember { mutableStateOf("") }
-
-    LaunchedEffect(Unit) {
-        webSocketManager.disconnect()
-    }
 
     Column(
         modifier = Modifier
@@ -44,7 +37,7 @@ fun PlayerSelectionScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            "Choose your Player",
+            "Choose your Side",
             fontSize = 24.sp,
             color = Color.White,
             fontWeight = FontWeight.Normal
@@ -52,56 +45,44 @@ fun PlayerSelectionScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
+        // --- Player 1 Button ---
         Button(
             onClick = {
-                isConnecting = true
                 selectedPlayerLabel = "Player 1"
-                webSocketManager.connect("host1")
                 onPlayerSelected(1)
             },
-            enabled = !isConnecting,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFF44336),
-                disabledContainerColor = Color(0x77F44336)
+                containerColor = Color(0xFFF44336)
             ),
             modifier = Modifier
                 .width(220.dp)
                 .height(60.dp)
         ) {
-            Text(
-                if (isConnecting && selectedPlayerLabel == "Player 1") "Connecting..." else "Player 1",
-                fontSize = 18.sp
-            )
+            Text("Player 1 (Red)", fontSize = 18.sp)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // --- Player 2 Button ---
         Button(
             onClick = {
-                isConnecting = true
                 selectedPlayerLabel = "Player 2"
-                webSocketManager.connect("host2")
                 onPlayerSelected(2)
             },
-            enabled = !isConnecting,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF4CAF50),
-                disabledContainerColor = Color(0x774CAF50)
+                containerColor = Color(0xFF4CAF50)
             ),
             modifier = Modifier
                 .width(220.dp)
                 .height(60.dp)
         ) {
-            Text(
-                if (isConnecting && selectedPlayerLabel == "Player 2") "Connecting..." else "Player 2",
-                fontSize = 18.sp
-            )
+            Text("Player 2 (Green)", fontSize = 18.sp)
         }
 
         Spacer(modifier = Modifier.height(40.dp))
 
         Text(
-            "Info: The game starts automatically once both players are connected.",
+            "Info: Ensure your opponent joins the same Lobby ID.",
             fontSize = 14.sp,
             color = Color.Yellow.copy(alpha = 0.7f),
             textAlign = TextAlign.Center,

@@ -12,15 +12,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun WaitingScreen(playerNumber: Int) {
+fun WaitingScreen(playerNumber: Int, lobbyId: String? = null) {
     val playerColor = when (playerNumber) {
         1 -> Color(0xFFF44336)
         2 -> Color(0xFF4CAF50)
-        else -> Color.White
+        else -> Color(0xFF06D6A0)
+    }
+
+    val playerText = when (playerNumber) {
+        0 -> "Connecting..."
+        else -> "You are Player $playerNumber"
     }
 
     Box(
@@ -31,7 +37,7 @@ fun WaitingScreen(playerNumber: Int) {
     ) {
         Card(
             modifier = Modifier
-                .width(320.dp)
+                .width(400.dp)
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
@@ -42,33 +48,87 @@ fun WaitingScreen(playerNumber: Int) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier
-                    .padding(24.dp)
+                    .padding(32.dp)
                     .fillMaxWidth()
             ) {
+                // Show lobby code prominently
+                if (!lobbyId.isNullOrBlank()) {
+                    Text(
+                        "LOBBY CODE",
+                        fontSize = 14.sp,
+                        color = Color.White.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 2.sp
+                    )
+                    Text(
+                        lobbyId,
+                        fontSize = 48.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 8.sp
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+                
                 Text(
-                    "You are player $playerNumber",
-                    fontSize = 20.sp,
+                    playerText,
+                    fontSize = 28.sp,
                     color = playerColor,
                     fontWeight = FontWeight.Bold
                 )
-                
-                Spacer(modifier = Modifier.height(20.dp))
-                
+
+                Spacer(modifier = Modifier.height(24.dp))
+
                 Text(
-                    "Waiting for second player...",
-                    fontSize = 16.sp,
+                    "Waiting for opponent...",
+                    fontSize = 18.sp,
                     color = Color.White
                 )
-                
+
                 Spacer(modifier = Modifier.height(32.dp))
-                
+
                 CircularProgressIndicator(
                     color = playerColor,
                     strokeWidth = 4.dp,
                     modifier = Modifier.size(64.dp)
                 )
+
+                Spacer(modifier = Modifier.height(32.dp))
                 
-                Spacer(modifier = Modifier.height(24.dp))
+                // Instructions for mobile user
+                if (playerNumber > 0) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = playerColor.copy(alpha = 0.2f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                "📱 On your phone:",
+                                fontSize = 14.sp,
+                                color = Color.White.copy(alpha = 0.8f),
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "Enter code: ${lobbyId ?: "----"}",
+                                fontSize = 16.sp,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "Select: Player $playerNumber",
+                                fontSize = 16.sp,
+                                color = playerColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
             }
         }
     }

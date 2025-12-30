@@ -20,15 +20,20 @@ import insanecrossmobilepingpongapp.composeapp.generated.resources.*
 
 @Composable
 fun WaitingScreen(
-    playerRole: PlayerRole,
+    playerRole: PlayerRole?,
+    lobbyId: String = "",
     isDarkTheme: Boolean
 ) {
-    val playerNumber = if (playerRole == PlayerRole.PLAYER1) 1 else 2
+    val playerNumber = when (playerRole) {
+        PlayerRole.PLAYER1 -> 1
+        PlayerRole.PLAYER2 -> 2
+        null -> 0
+    }
     
     val playerColor = when (playerNumber) {
         1 -> Color(0xFFF44336)
         2 -> Color(0xFF4CAF50)
-        else -> Color.White
+        else -> Color(0xFF06D6A0)
     }
 
     val backgroundColor = if (isDarkTheme) Color(0xFF222222) else Color(0xFFF0F4F8)
@@ -57,12 +62,32 @@ fun WaitingScreen(
                     .padding(24.dp)
                     .fillMaxWidth()
             ) {
-                Text(
-                    stringResource(Res.string.you_are_player, playerNumber),
-                    fontSize = 20.sp,
-                    color = playerColor,
-                    fontWeight = FontWeight.Bold
-                )
+                // Show lobby code if available
+                if (lobbyId.isNotBlank()) {
+                    Text(
+                        "Lobby: $lobbyId",
+                        fontSize = 14.sp,
+                        color = textColor.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                
+                if (playerRole != null) {
+                    Text(
+                        stringResource(Res.string.you_are_player, playerNumber),
+                        fontSize = 20.sp,
+                        color = playerColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                } else {
+                    Text(
+                        "Connecting...",
+                        fontSize = 20.sp,
+                        color = playerColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 
                 Spacer(modifier = Modifier.height(20.dp))
                 

@@ -12,8 +12,9 @@ import com.example.insanecrossmobilepingpongapp.network.ConnectionState
  * @property connectionState WebSocket connection state
  * @property serverUrl WebSocket server URL
  * @property token Authentication token
+ * @property lobbyId The lobby ID to join
  * @property currentScreen Current screen being displayed
- * @property playerRole Selected player role
+ * @property playerRole Selected player role (assigned by server)
  * @property isDebugVisible Whether debug overlay is visible
  */
 data class ControllerState(
@@ -23,7 +24,8 @@ data class ControllerState(
     val isActive: Boolean = false,
     val connectionState: ConnectionState = ConnectionState.DISCONNECTED,
     val serverUrl: String = "ws://131.159.222.93:3000",
-    val token: String = "player1",
+    val token: String = "player",
+    val lobbyId: String = "",
     val currentScreen: Screen = Screen.Menu,
     val playerRole: PlayerRole? = null,
     val isDebugVisible: Boolean = false
