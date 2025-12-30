@@ -171,6 +171,11 @@ class WebSocketManager {
                         println("Role assigned by server: $role")
                     }
                 }
+                // 7. Handle Game In Progress (rejoin running game)
+                "game_in_progress" -> {
+                    println("Rejoining game in progress")
+                    _bothPlayersConnected.value = true
+                }
             }
         } catch (e: Exception) {
             println("Error parsing message: $message | ${e.message}")
