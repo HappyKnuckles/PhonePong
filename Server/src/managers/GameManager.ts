@@ -43,7 +43,17 @@ export default class GameManager {
     // 2. Broadcast the updated "Occupied Slots" list to EVERYONE
     this.net.broadcastLobbyState(this.lobbyId);
 
-    if (this.net.isReady() && !this.state.isRunning) {
+    // 3. If game is already running, send "start" to the reconnecting client
+    if (this.state.isRunning && this.net.isReady()) {
+      // Send start to the newly connected client so they can join the game in progress
+      this.net.sendJSON(token as ClientRole, { type: 'game_in_progress' });
+      const client = ws;
+      if (client.readyState === WebSocket.OPEN) {
+        client.send('start');
+      }
+      console.log(`[Lobby ${this.lobbyId}] 🔄 Client ${token} rejoined running game`);
+    } else if (this.net.isReady() && !this.state.isRunning) {
+      // All clients connected for the first time, start the game
       this.startGame();
     }
   }
