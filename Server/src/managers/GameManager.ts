@@ -4,15 +4,20 @@ import PhysicsEngine from '../core/PhysicsEngine';
 import NetworkManager, { ClientRole } from './NetworkManager';
 import WebSocket from 'ws';
 
-class GameManager {
+export default class GameManager {
+  public lobbyId: string;
   public state: GameState;
   public physics: PhysicsEngine;
   public net: NetworkManager;
 
   private physicsInterval: NodeJS.Timeout | null;
   private broadcastInterval: NodeJS.Timeout | null;
+  private onDestroy: () => void;
 
-  constructor() {
+  constructor(lobbyId: string, onDestroy: () => void) {
+    this.lobbyId = lobbyId;
+    this.onDestroy = onDestroy;
+
     this.state = new GameState();
     this.physics = new PhysicsEngine();
     this.net = new NetworkManager();
@@ -21,9 +26,22 @@ class GameManager {
     this.broadcastInterval = null;
   }
 
+  public cleanup(): void {
+    this.stopGameLoop();
+  }
+
   // --- Connectivity ---
   public registerClient(token: string, ws: WebSocket): void {
     this.net.register(token, ws);
+
+    // 1. Send specific info to the new client
+    this.net.sendJSON(token as ClientRole, {
+      type: 'lobby_info',
+      lobbyId: this.lobbyId
+    });
+
+    // 2. Broadcast the updated "Occupied Slots" list to EVERYONE
+    this.net.broadcastLobbyState(this.lobbyId);
 
     if (this.net.isReady() && !this.state.isRunning) {
       this.startGame();
@@ -32,6 +50,16 @@ class GameManager {
 
   public removeClient(token: string): void {
     this.net.remove(token);
+
+    // Broadcast update so others know a slot opened up
+    this.net.broadcastLobbyState(this.lobbyId);
+
+    // Optional: If no players/hosts left, destroy lobby
+    const occupied = this.net.getOccupiedRoles();
+    if (occupied.length === 0) {
+      console.log(`[Lobby ${this.lobbyId}] Empty, destroying...`);
+      this.onDestroy();
+    }
   }
 
 
@@ -49,7 +77,7 @@ class GameManager {
 
     this.state.isRunning = true;
 
-    console.log('😎 Game Initialized - Waiting for Player 1 Swing');
+    console.log(`[Lobby ${this.lobbyId}] 😎 Game Initialized - Waiting for Player 1 Swing`);
     this.startGameLoop();
   }
 
@@ -85,12 +113,12 @@ class GameManager {
     if (this.state.hitTimeout && Date.now() < this.state.hitTimeout) return;
     if (speed <= 1.0) return;
 
-    console.log(`🏓 ${token} swung (Speed: ${speed})`);
+    console.log(`[Lobby ${this.lobbyId}] 🏓 ${token} swung (Speed: ${speed})`);
 
     const playerNum = token === 'player1' ? 1 : 2;
 
     if (this.state.swingToStartPlayer === playerNum) {
-      console.log('🏁 Serve Hit!');
+      console.log(`[Lobby ${this.lobbyId}] 🏁 Serve Hit!`);
       this.applyHit(speed, null, true);
       this.state.swingToStartPlayer = 0;
       return;
@@ -118,7 +146,7 @@ class GameManager {
 
   private handleSideMiss(): void {
     const winner = this.getTargetPlayer();
-    console.log(`⚠️ Ball Hit Floor (OUT)! Winner: Player ${winner}`);
+    console.log(`[Lobby ${this.lobbyId}] ⚠️ Ball Hit Floor (OUT)! Winner: Player ${winner}`);
 
     if (winner === 1) this.state.score.p1++;
     else this.state.score.p2++;
@@ -145,7 +173,7 @@ class GameManager {
 
   private handleScore(): void {
     const { p1, p2 } = this.state.score;
-    console.log(`🏆 Score: P1:${p1} - P2:${p2}`);
+    console.log(`[Lobby ${this.lobbyId}] 🏆 Score: P1:${p1} - P2:${p2}`);
 
     const totalPoints = p1 + p2;
     if (totalPoints % 2 === 0) {
@@ -206,5 +234,3 @@ class GameManager {
     this.net.sendJSON('host2', { ...data, type: 'collision' });
   }
 }
-
-export default new GameManager();

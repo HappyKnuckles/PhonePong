@@ -46,6 +46,9 @@ class WebSocketClient {
     private val _incomingMessages = MutableSharedFlow<String>()
     val incomingMessages: SharedFlow<String> = _incomingMessages.asSharedFlow()
 
+    private val _assignedRole = MutableStateFlow<String?>(null)
+    val assignedRole: StateFlow<String?> = _assignedRole.asStateFlow()
+
     private var session: DefaultClientWebSocketSession? = null
     private val scope = CoroutineScope(Dispatchers.Default)
 
@@ -53,9 +56,10 @@ class WebSocketClient {
      * Connect to WebSocket server.
      *
      * @param url WebSocket server URL (e.g., "ws://131.159.222.93:3000")
-     * @param token Optional authentication token (not required for production server)
+     * @param token Token for role (use "player" for auto-assign)
+     * @param lobbyId Optional lobby ID to join
      */
-    fun connect(url: String, token: String = "") {
+    fun connect(url: String, token: String = "player", lobbyId: String? = null) {
         if (_connectionState.value == ConnectionState.CONNECTING ||
             _connectionState.value == ConnectionState.CONNECTED) {
             Log.w(TAG, "⚠️ Already connecting or connected")
@@ -65,9 +69,15 @@ class WebSocketClient {
         scope.launch {
             try {
                 _connectionState.value = ConnectionState.CONNECTING
+                _assignedRole.value = null
 
-                // Build URL with optional token
-                val fullUrl = if (token.isNotBlank()) "$url/?token=$token" else url
+                // Build URL with token and lobby
+                val params = mutableListOf<String>()
+                if (token.isNotBlank()) params.add("token=$token")
+                if (!lobbyId.isNullOrBlank()) params.add("lobby=$lobbyId")
+                
+                val queryString = if (params.isNotEmpty()) "?${params.joinToString("&")}" else ""
+                val fullUrl = "$url/$queryString"
                 Log.i(TAG, "🔌 Connecting to WebSocket: $fullUrl")
 
                 client.webSocket(urlString = fullUrl) {
@@ -82,6 +92,10 @@ class WebSocketClient {
                                 is Frame.Text -> {
                                     val text = frame.readText()
                                     Log.d(TAG, "📨 Received: $text")
+                                    
+                                    // Check for role_assigned message
+                                    handleRoleAssignment(text)
+                                    
                                     _incomingMessages.emit(text)
                                 }
                                 is Frame.Close -> {
@@ -157,11 +171,39 @@ class WebSocketClient {
     }
 
     /**
+     * Handle role_assigned message from server
+     */
+    private fun handleRoleAssignment(message: String) {
+        try {
+            val json = Json { ignoreUnknownKeys = true }
+            val element = json.parseToJsonElement(message)
+            val jsonObject = element as? kotlinx.serialization.json.JsonObject ?: return
+            
+            val type = jsonObject["type"]?.let { 
+                (it as? kotlinx.serialization.json.JsonPrimitive)?.content 
+            }
+            
+            if (type == "role_assigned") {
+                val role = jsonObject["role"]?.let { 
+                    (it as? kotlinx.serialization.json.JsonPrimitive)?.content 
+                }
+                if (role != null) {
+                    Log.i(TAG, "🎯 Role assigned by server: $role")
+                    _assignedRole.value = role
+                }
+            }
+        } catch (e: Exception) {
+            // Not a role_assigned message, ignore
+        }
+    }
+
+    /**
      * Close the HTTP client (cleanup).
      */
     fun close() {
         disconnect()
         client.close()
+        _assignedRole.value = null
         Log.i(TAG, "🛑 WebSocket client closed")
     }
 

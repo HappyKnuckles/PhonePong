@@ -1,7 +1,8 @@
-import { Server, WebSocket } from 'ws'; 
+import { Server, WebSocket } from 'ws';
 import { IncomingMessage } from 'http';
-import gameManager from '../managers/GameManager';
+import lobbyManager from '../managers/LobbyManager';
 import { ClientRole } from '../managers/NetworkManager';
+import { URLSearchParams } from 'url';
 
 interface PlayerInput {
   speed?: number;
@@ -9,18 +10,77 @@ interface PlayerInput {
 
 export default (wss: Server) => {
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
-    const url = req.url || '';
-    const token = url.replace('/?token=', '');
+    const urlParts = (req.url || '').split('?');
+    const params = new URLSearchParams(urlParts[1] || '');
 
-    if (!isValidRole(token)) {
-      console.log(`⚠️ Unknown client rejected: ${token}`);
+    let token = params.get('token') as string;
+    const action = params.get('action');
+    let lobbyId = params.get('lobby');
+
+    const isAutoAssignPlayer = token === 'player';
+    const isAutoAssignHost = token === 'host';
+
+    if (!isAutoAssignPlayer && !isAutoAssignHost && !isValidRole(token)) {
+      console.log(`⚠️ Unknown client role rejected: ${token}`);
       ws.close();
       return;
     }
 
-    gameManager.registerClient(token, ws);
+    // --- LOBBY LOGIC ---
+    let gameInstance;
 
+    if (action === 'create') {
+      lobbyId = lobbyManager.createLobby();
+      gameInstance = lobbyManager.getLobby(lobbyId);
 
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'lobby_created', lobbyId }));
+      }
+    } else if (lobbyId) {
+      lobbyId = lobbyId.toUpperCase();
+      gameInstance = lobbyManager.getLobby(lobbyId);
+    }
+
+    // --- VALIDATION ---
+    if (!gameInstance || !lobbyId) {
+      console.log(`⚠️ Connection rejected: Invalid or missing Lobby ID (${lobbyId})`);
+      ws.send(JSON.stringify({ type: 'error', message: 'Lobby not found' }));
+      ws.close();
+      return;
+    }
+
+    // --- AUTO-ASSIGN PLAYER/HOST SLOT ---
+    if (isAutoAssignPlayer) {
+      const availableSlot = gameInstance.net.getAvailablePlayerSlot();
+      if (!availableSlot) {
+        console.log(`⚠️ Connection rejected: No player slots available in lobby ${lobbyId}`);
+        ws.send(JSON.stringify({ type: 'error', message: 'No player slots available' }));
+        ws.close();
+        return;
+      }
+      token = availableSlot;
+      console.log(`🎯 Auto-assigned player slot: ${token}`);
+    } else if (isAutoAssignHost) {
+      const availableSlot = gameInstance.net.getAvailableHostSlot();
+      if (!availableSlot) {
+        console.log(`⚠️ Connection rejected: No host slots available in lobby ${lobbyId}`);
+        ws.send(JSON.stringify({ type: 'error', message: 'No host slots available' }));
+        ws.close();
+        return;
+      }
+      token = availableSlot;
+      console.log(`🎯 Auto-assigned host slot: ${token}`);
+    }
+
+    // Register client
+    gameInstance.registerClient(token, ws);
+
+    // Send the assigned role back to the client
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'role_assigned', role: token }));
+    }
+
+    // --- MESSAGE HANDLING ---
     ws.on('message', (message: Buffer | string) => {
       try {
         if (!token.startsWith('player')) return;
@@ -29,20 +89,23 @@ export default (wss: Server) => {
         const parsed = JSON.parse(msgString) as PlayerInput;
 
         if (typeof parsed.speed === 'number') {
-          gameManager.handlePlayerSwing(token, parsed.speed);
+          gameInstance?.handlePlayerSwing(token, parsed.speed);
         }
       } catch (e: any) {
-        console.error(`Error handling message from ${token}:`, e.message);
+        console.error(`Error handling message from ${token} in lobby ${lobbyId}:`, e.message);
       }
     });
 
     ws.on('close', () => {
-      console.log(`❌ Disconnected: ${token}`);
-      gameManager.removeClient(token);
+      console.log(`❌ Disconnected: ${token} from lobby ${lobbyId}`);
+      if (lobbyId && token) {
+        const game = lobbyManager.getLobby(lobbyId);
+        if (game) game.removeClient(token);
+      }
     });
 
     ws.on('error', (err: Error) => {
-      console.error(`🔴 Error on ${token}:`, err.message);
+      console.error(`🔴 Error on ${token} in lobby ${lobbyId}:`, err.message);
     });
   });
 };

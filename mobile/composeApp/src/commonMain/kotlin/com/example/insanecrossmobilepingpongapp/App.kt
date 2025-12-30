@@ -39,8 +39,8 @@ fun App(
         when (state.currentScreen) {
             Screen.Menu -> {
                 MenuScreen(
-                    onPlayerSelected = { playerRole ->
-                        viewModel.selectPlayer(playerRole)
+                    onJoinLobby = { lobbyId, playerRole ->
+                        viewModel.joinLobby(lobbyId, playerRole)
                     },
                     isDarkTheme = isDarkTheme,
                     onThemeToggle = { isDarkTheme = it }
@@ -48,12 +48,11 @@ fun App(
             }
 
             Screen.Waiting -> {
-                state.playerRole?.let { playerRole ->
-                    WaitingScreen(
-                        playerRole = playerRole,
-                        isDarkTheme = isDarkTheme
-                    )
-                }
+                WaitingScreen(
+                    playerRole = state.playerRole,
+                    lobbyId = state.lobbyId,
+                    isDarkTheme = isDarkTheme
+                )
             }
 
             Screen.Game -> {

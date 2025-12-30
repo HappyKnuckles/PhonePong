@@ -3,13 +3,15 @@ package com.example.insanecrossmobilepingpongapp.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -18,15 +20,19 @@ import org.jetbrains.compose.resources.stringResource
 import insanecrossmobilepingpongapp.composeapp.generated.resources.*
 
 /**
- * Start menu screen where users select their player role.
+ * Start menu screen where users enter lobby code and select their player role.
+ * Player role must match the web host screen to avoid mirrored view.
  */
 @Composable
 fun MenuScreen(
-    onPlayerSelected: (PlayerRole) -> Unit,
+    onJoinLobby: (String, PlayerRole) -> Unit,
     isDarkTheme: Boolean,
     onThemeToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var lobbyCode by remember { mutableStateOf("") }
+    var selectedRole by remember { mutableStateOf<PlayerRole?>(null) }
+    
     val backgroundColor = if (isDarkTheme) {
         Brush.verticalGradient(
             colors = listOf(
@@ -68,7 +74,7 @@ fun MenuScreen(
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(32.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 32.dp)
@@ -81,7 +87,7 @@ fun MenuScreen(
                 Text(
                     text = stringResource(Res.string.app_name),
                     style = MaterialTheme.typography.displayLarge.copy(
-                        fontSize = 48.sp,
+                        fontSize = 42.sp,
                         fontWeight = FontWeight.Bold,
                         color = textColor
                     ),
@@ -89,45 +95,130 @@ fun MenuScreen(
                 )
                 
                 Text(
-                    text = stringResource(Res.string.choose_player),
+                    text = "Enter lobby code from your screen",
                     style = MaterialTheme.typography.titleLarge.copy(
-                        fontSize = 20.sp,
+                        fontSize = 16.sp,
                         color = subTextColor
                     ),
                     textAlign = TextAlign.Center
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            // Lobby Code Input
+            OutlinedTextField(
+                value = lobbyCode,
+                onValueChange = { 
+                    // Only allow uppercase letters, max 4 characters
+                    lobbyCode = it.uppercase().filter { char -> char.isLetter() }.take(4)
+                },
+                label = { Text("Lobby Code") },
+                placeholder = { Text("ABCD") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Characters
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = textColor,
+                    unfocusedTextColor = textColor,
+                    focusedBorderColor = Color(0xFF06D6A0),
+                    unfocusedBorderColor = subTextColor,
+                    focusedLabelColor = Color(0xFF06D6A0),
+                    unfocusedLabelColor = subTextColor,
+                    cursorColor = Color(0xFF06D6A0)
+                ),
+                textStyle = MaterialTheme.typography.headlineMedium.copy(
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 8.sp
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp)
+            )
 
-            // Player Selection Buttons
+            // Player Selection Section
             Column(
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                modifier = Modifier.fillMaxWidth()
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Player 1 Button (Red)
-                PlayerButton(
-                    text = stringResource(Res.string.player_1),
-                    color = Color(0xFFE63946),
-                    onClick = { onPlayerSelected(PlayerRole.PLAYER1) }
+                Text(
+                    text = "Select your player (match your screen)",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 14.sp,
+                        color = subTextColor
+                    ),
+                    textAlign = TextAlign.Center
                 )
 
-                // Player 2 Button (Green)
-                PlayerButton(
-                    text = stringResource(Res.string.player_2),
-                    color = Color(0xFF06D6A0),
-                    onClick = { onPlayerSelected(PlayerRole.PLAYER2) }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Player 1 Button (Red)
+                    PlayerSelectButton(
+                        text = "Player 1",
+                        color = Color(0xFFE63946),
+                        isSelected = selectedRole == PlayerRole.PLAYER1,
+                        onClick = { selectedRole = PlayerRole.PLAYER1 },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Player 2 Button (Green)
+                    PlayerSelectButton(
+                        text = "Player 2",
+                        color = Color(0xFF06D6A0),
+                        isSelected = selectedRole == PlayerRole.PLAYER2,
+                        onClick = { selectedRole = PlayerRole.PLAYER2 },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Join Button
+            Button(
+                onClick = { 
+                    selectedRole?.let { role ->
+                        onJoinLobby(lobbyCode, role)
+                    }
+                },
+                enabled = lobbyCode.length == 4 && selectedRole != null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = when (selectedRole) {
+                        PlayerRole.PLAYER1 -> Color(0xFFE63946)
+                        PlayerRole.PLAYER2 -> Color(0xFF06D6A0)
+                        null -> Color(0xFF888888)
+                    },
+                    contentColor = Color.White,
+                    disabledContainerColor = Color(0xFF888888).copy(alpha = 0.3f),
+                    disabledContentColor = Color.White.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(16.dp),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 8.dp,
+                    pressedElevation = 4.dp
+                )
+            ) {
+                Text(
+                    text = "Join Game",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
             // Info Text
             Text(
-                text = stringResource(Res.string.game_start_note),
+                text = "⚠️ Make sure to select the same player\nas shown on your web screen",
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    color = if (isDarkTheme) Color(0xFF888888) else Color(0xFF627D98),
-                    fontSize = 14.sp
+                    color = if (isDarkTheme) Color(0xFFFFAA00) else Color(0xFFB86E00),
+                    fontSize = 13.sp
                 ),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -137,35 +228,37 @@ fun MenuScreen(
 }
 
 /**
- * Reusable player selection button with custom color.
+ * Player selection button with selected state.
  */
 @Composable
-private fun PlayerButton(
+private fun PlayerSelectButton(
     text: String,
     color: Color,
+    isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(80.dp),
+        modifier = modifier.height(56.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = color,
+            containerColor = if (isSelected) color else color.copy(alpha = 0.3f),
             contentColor = Color.White
         ),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 8.dp,
+            defaultElevation = if (isSelected) 8.dp else 2.dp,
             pressedElevation = 4.dp
-        )
+        ),
+        border = if (isSelected) {
+            androidx.compose.foundation.BorderStroke(3.dp, Color.White)
+        } else null
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontSize = 18.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
             )
         )
     }
