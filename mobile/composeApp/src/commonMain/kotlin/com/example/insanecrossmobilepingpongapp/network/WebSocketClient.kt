@@ -77,7 +77,7 @@ class WebSocketClient {
                 if (!lobbyId.isNullOrBlank()) params.add("lobby=$lobbyId")
                 
                 val queryString = if (params.isNotEmpty()) "?${params.joinToString("&")}" else ""
-                val fullUrl = "$url/$queryString"
+                val fullUrl = "$url$queryString"
                 Log.i(TAG, "🔌 Connecting to WebSocket: $fullUrl")
 
                 client.webSocket(urlString = fullUrl) {

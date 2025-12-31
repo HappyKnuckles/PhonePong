@@ -32,7 +32,13 @@ export default class GameManager {
 
   // --- Connectivity ---
   public registerClient(token: string, ws: WebSocket): void {
+    console.log(`[Lobby ${this.lobbyId}] 📝 Registering client: ${token}`);
     this.net.register(token, ws);
+
+    // Log current state
+    const occupied = this.net.getOccupiedRoles();
+    console.log(`[Lobby ${this.lobbyId}] 📊 Occupied slots after registration: ${occupied.join(', ') || 'none'}`);
+    console.log(`[Lobby ${this.lobbyId}] 🎯 isReady: ${this.net.isReady()}, isRunning: ${this.state.isRunning}`);
 
     // 1. Send specific info to the new client
     this.net.sendJSON(token as ClientRole, {

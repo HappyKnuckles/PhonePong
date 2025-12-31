@@ -10,12 +10,17 @@ interface PlayerInput {
 
 export default (wss: Server) => {
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
+    console.log(`🔌 New connection from: ${req.socket.remoteAddress}`);
+    console.log(`   URL: ${req.url}`);
+    
     const urlParts = (req.url || '').split('?');
     const params = new URLSearchParams(urlParts[1] || '');
 
     let token = params.get('token') as string;
     const action = params.get('action');
     let lobbyId = params.get('lobby');
+
+    console.log(`   Parsed params: token=${token}, action=${action}, lobby=${lobbyId}`);
 
     const isAutoAssignPlayer = token === 'player';
     const isAutoAssignHost = token === 'host';
