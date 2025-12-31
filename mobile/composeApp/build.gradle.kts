@@ -16,6 +16,16 @@ kotlin {
         }
     }
 
+    js(IR) {
+        browser {
+            commonWebpackConfig {
+                outputFileName = "phonepong-controller.js"
+            }
+
+        }
+        binaries.executable()
+    }
+
     listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -36,6 +46,11 @@ kotlin {
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
             implementation(libs.kotlinx.datetime)
+        }
+        val jsMain by getting {
+            dependencies {
+                implementation(libs.ktor.client.js)
+            }
         }
         commonMain.dependencies {
             implementation(compose.runtime)

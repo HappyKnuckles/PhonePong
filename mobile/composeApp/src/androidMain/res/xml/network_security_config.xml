@@ -5,6 +5,6 @@
     
     <!-- Allow cleartext traffic ONLY for the backend server (hackathon mode) -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">131.159.222.93</domain>
+        <domain includeSubdomains="true">192.168.178.85</domain>
     </domain-config>
 </network-security-config>
