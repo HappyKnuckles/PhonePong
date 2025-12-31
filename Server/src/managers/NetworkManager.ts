@@ -157,6 +157,23 @@ class NetworkManager {
     return null;
   }
 
+  /**
+   * Returns true if all four slots (host1, host2, player1, player2) are filled.
+   */
+  public isFull(): boolean {
+    const h1 = this.clients.host1;
+    const h2 = this.clients.host2;
+    const p1 = this.clients.player1;
+    const p2 = this.clients.player2;
+
+    return (
+      h1 !== null && h1.readyState === WebSocket.OPEN &&
+      h2 !== null && h2.readyState === WebSocket.OPEN &&
+      p1 !== null && p1.readyState === WebSocket.OPEN &&
+      p2 !== null && p2.readyState === WebSocket.OPEN
+    );
+  }
+
   private isValidRole(token: string): token is ClientRole {
     return ['host1', 'host2', 'player1', 'player2'].includes(token);
   }

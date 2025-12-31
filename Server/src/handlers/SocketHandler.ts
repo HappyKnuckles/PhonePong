@@ -49,6 +49,14 @@ export default (wss: Server) => {
       return;
     }
 
+    // --- CHECK IF LOBBY IS FULL ---
+    if (gameInstance.net.isFull()) {
+      console.log(`⚠️ Connection rejected: Lobby ${lobbyId} is full (all slots occupied)`);
+      ws.send(JSON.stringify({ type: 'error', message: 'Lobby is full' }));
+      ws.close();
+      return;
+    }
+
     // --- AUTO-ASSIGN PLAYER/HOST SLOT ---
     if (isAutoAssignPlayer) {
       const availableSlot = gameInstance.net.getAvailablePlayerSlot();
