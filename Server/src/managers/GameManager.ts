@@ -127,7 +127,7 @@ export default class GameManager {
   public handlePlayerSwing(token: ClientRole, speed: number): void {
     if (!this.net.isReady()) return;
     if (this.state.hitTimeout && Date.now() < this.state.hitTimeout) return;
-    if (speed <= 1.0) return;
+    if (speed <= 0.0) return;
 
     console.log(`[Lobby ${this.lobbyId}] 🏓 ${token} swung (Speed: ${speed})`);
 

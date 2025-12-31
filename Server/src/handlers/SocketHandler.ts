@@ -12,7 +12,7 @@ export default (wss: Server) => {
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     console.log(`🔌 New connection from: ${req.socket.remoteAddress}`);
     console.log(`   URL: ${req.url}`);
-    
+
     const urlParts = (req.url || '').split('?');
     const params = new URLSearchParams(urlParts[1] || '');
 
@@ -96,12 +96,15 @@ export default (wss: Server) => {
     // --- MESSAGE HANDLING ---
     ws.on('message', (message: Buffer | string) => {
       try {
+        const msgString = message.toString();
+        console.log(`📨 Message from ${token}: ${msgString}`);
+
         if (!token.startsWith('player')) return;
 
-        const msgString = message.toString();
         const parsed = JSON.parse(msgString) as PlayerInput;
 
         if (typeof parsed.speed === 'number') {
+          console.log(`🏓 Player ${token} swing with speed: ${parsed.speed}`);
           gameInstance?.handlePlayerSwing(token, parsed.speed);
         }
       } catch (e: any) {

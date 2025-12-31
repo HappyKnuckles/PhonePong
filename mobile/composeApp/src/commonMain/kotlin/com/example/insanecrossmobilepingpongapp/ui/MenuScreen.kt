@@ -16,12 +16,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.insanecrossmobilepingpongapp.model.PlayerRole
+import com.example.insanecrossmobilepingpongapp.sensor.needsMotionPermissionRequest
 import org.jetbrains.compose.resources.stringResource
 import insanecrossmobilepingpongapp.composeapp.generated.resources.*
 
+var requestMotionPermissionHandler: ((Boolean) -> Unit) -> Unit = { callback ->
+    callback(true)
+}
+
 /**
  * Start menu screen where users enter lobby code and select their player role.
- * Player role must match the web host screen to avoid mirrored view.
  */
 @Composable
 fun MenuScreen(
@@ -33,20 +37,14 @@ fun MenuScreen(
     var lobbyCode by remember { mutableStateOf("") }
     var selectedRole by remember { mutableStateOf<PlayerRole?>(null) }
     
+    // Initial check
+    var permissionGranted by remember { mutableStateOf(!needsMotionPermissionRequest()) }
+    var permissionDenied by remember { mutableStateOf(false) }
+    
     val backgroundColor = if (isDarkTheme) {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFF1A1A2E),
-                Color(0xFF0F0F1E)
-            )
-        )
+        Brush.verticalGradient(colors = listOf(Color(0xFF1A1A2E), Color(0xFF0F0F1E)))
     } else {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFFF0F4F8),
-                Color(0xFFD9E2EC)
-            )
-        )
+        Brush.verticalGradient(colors = listOf(Color(0xFFF0F4F8), Color(0xFFD9E2EC)))
     }
 
     val textColor = if (isDarkTheme) Color.White else Color(0xFF102A43)
@@ -59,25 +57,16 @@ fun MenuScreen(
         contentAlignment = Alignment.Center
     ) {
         // Theme Toggle
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-        ) {
+        Box(modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)) {
             IconButton(onClick = { onThemeToggle(!isDarkTheme) }) {
-                Text(
-                    text = if (isDarkTheme) "☀️" else "🌙",
-                    fontSize = 24.sp
-                )
+                Text(text = if (isDarkTheme) "☀️" else "🌙", fontSize = 24.sp)
             }
         }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 32.dp)
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
         ) {
             // Title Section
             Column(
@@ -93,7 +82,6 @@ fun MenuScreen(
                     ),
                     textAlign = TextAlign.Center
                 )
-                
                 Text(
                     text = "Enter lobby code from your screen",
                     style = MaterialTheme.typography.titleLarge.copy(
@@ -108,15 +96,12 @@ fun MenuScreen(
             OutlinedTextField(
                 value = lobbyCode,
                 onValueChange = { 
-                    // Only allow uppercase letters, max 4 characters
                     lobbyCode = it.uppercase().filter { char -> char.isLetter() }.take(4)
                 },
                 label = { Text("Lobby Code") },
                 placeholder = { Text("ABCD") },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Characters
-                ),
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = textColor,
                     unfocusedTextColor = textColor,
@@ -132,9 +117,7 @@ fun MenuScreen(
                     textAlign = TextAlign.Center,
                     letterSpacing = 8.sp
                 ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
             )
 
             // Player Selection Section
@@ -155,7 +138,6 @@ fun MenuScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Player 1 Button (Red)
                     PlayerSelectButton(
                         text = "Player 1",
                         color = Color(0xFFE63946),
@@ -164,7 +146,6 @@ fun MenuScreen(
                         modifier = Modifier.weight(1f)
                     )
 
-                    // Player 2 Button (Green)
                     PlayerSelectButton(
                         text = "Player 2",
                         color = Color(0xFF06D6A0),
@@ -177,17 +158,75 @@ fun MenuScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Motion Permission Button (Only visible if needed)
+            if (!permissionGranted && needsMotionPermissionRequest()) {
+                Button(
+                    onClick = {
+                        // Call the injected handler directly (synchronous call chain for iOS)
+                        requestMotionPermissionHandler { success ->
+                            permissionGranted = success
+                            permissionDenied = !success
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2196F3),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "📱 Enable Motion Sensors",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
+                
+                Text(
+                    text = "Tap to allow motion sensor access",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = if (isDarkTheme) Color(0xFFAAAAFF) else Color(0xFF2196F3),
+                        fontSize = 12.sp
+                    ),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            if (permissionDenied) {
+                Text(
+                    text = "⚠️ Denied. Check Safari Settings -> Motion Access.",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = Color(0xFFFF5555),
+                        fontSize = 12.sp
+                    ),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
             // Join Button
             Button(
                 onClick = { 
                     selectedRole?.let { role ->
-                        onJoinLobby(lobbyCode, role)
+                        if (!permissionGranted && needsMotionPermissionRequest()) {
+                            // Try permission one last time
+                            requestMotionPermissionHandler { success ->
+                                permissionGranted = success
+                                permissionDenied = !success
+                                if (success) {
+                                    onJoinLobby(lobbyCode, role)
+                                }
+                            }
+                        } else {
+                            onJoinLobby(lobbyCode, role)
+                        }
                     }
                 },
                 enabled = lobbyCode.length == 4 && selectedRole != null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp),
+                modifier = Modifier.fillMaxWidth().height(64.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = when (selectedRole) {
                         PlayerRole.PLAYER1 -> Color(0xFFE63946)
@@ -199,10 +238,7 @@ fun MenuScreen(
                     disabledContentColor = Color.White.copy(alpha = 0.5f)
                 ),
                 shape = RoundedCornerShape(16.dp),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 8.dp,
-                    pressedElevation = 4.dp
-                )
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
             ) {
                 Text(
                     text = "Join Game",
@@ -227,9 +263,6 @@ fun MenuScreen(
     }
 }
 
-/**
- * Player selection button with selected state.
- */
 @Composable
 private fun PlayerSelectButton(
     text: String,
@@ -250,9 +283,7 @@ private fun PlayerSelectButton(
             defaultElevation = if (isSelected) 8.dp else 2.dp,
             pressedElevation = 4.dp
         ),
-        border = if (isSelected) {
-            androidx.compose.foundation.BorderStroke(3.dp, Color.White)
-        } else null
+        border = if (isSelected) androidx.compose.foundation.BorderStroke(3.dp, Color.White) else null
     ) {
         Text(
             text = text,

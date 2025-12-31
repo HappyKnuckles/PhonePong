@@ -23,7 +23,7 @@ data class ControllerState(
     val calibrationOffset: DeviceOrientation = DeviceOrientation(),
     val isActive: Boolean = false,
     val connectionState: ConnectionState = ConnectionState.DISCONNECTED,
-    val serverUrl: String = "ws://192.168.178.85:3000",
+    val serverUrl: String = "wss://192.168.178.85:3000",
     val token: String = "player",
     val lobbyId: String = "",
     val currentScreen: Screen = Screen.Menu,

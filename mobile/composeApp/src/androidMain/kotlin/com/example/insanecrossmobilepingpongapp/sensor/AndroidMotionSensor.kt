@@ -172,3 +172,13 @@ class AndroidMotionSensor(private val context: Context) : MotionSensor {
 actual fun createMotionSensor(): MotionSensor {
     return AndroidMotionSensor(ContextProvider.getContext())
 }
+
+actual suspend fun requestMotionSensorPermission(): Boolean {
+    // Android doesn't need special permission for motion sensors
+    return true
+}
+
+actual fun needsMotionPermissionRequest(): Boolean {
+    // Android doesn't need special permission request
+    return false
+}

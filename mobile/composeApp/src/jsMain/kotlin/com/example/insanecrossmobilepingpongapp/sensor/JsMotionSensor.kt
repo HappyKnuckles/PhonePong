@@ -13,8 +13,12 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import org.w3c.dom.events.Event
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.js.Console
 import kotlin.math.PI
 import kotlin.math.sqrt
+
+// Access browser console
+private val console: Console get() = js("console").unsafeCast<Console>()
 
 /**
  * JS/Browser MotionSensor implementation using the DeviceOrientation and DeviceMotion APIs.
@@ -122,9 +126,15 @@ class JsMotionSensor : MotionSensor {
             // Try to get acceleration without gravity first, fall back to accelerationIncludingGravity
             val accel = e.acceleration ?: e.accelerationIncludingGravity
             if (accel != null) {
-                latestAccelX = ((accel.x as? Double) ?: 0.0).toFloat()
-                latestAccelY = ((accel.y as? Double) ?: 0.0).toFloat()
-                latestAccelZ = ((accel.z as? Double) ?: 0.0).toFloat()
+                // Convert G-force to m/s² (1G ≈ 9.81 m/s²) - same as iOS
+                val gravity = 9.81f
+                val rawX = ((accel.x as? Double) ?: 0.0).toFloat()
+                val rawY = ((accel.y as? Double) ?: 0.0).toFloat()
+                val rawZ = ((accel.z as? Double) ?: 0.0).toFloat()
+                
+                latestAccelX = rawX * gravity
+                latestAccelY = rawY * gravity
+                latestAccelZ = rawZ * gravity
             }
 
             // Only send if we don't have orientation events (to avoid double-sending)
@@ -251,4 +261,16 @@ private suspend fun <T> awaitPromise(promise: kotlin.js.Promise<T>): T {
 actual fun createMotionSensor(): MotionSensor {
     Log.i("JsMotionSensor", "Creating JsMotionSensor for browser")
     return JsMotionSensor()
+}
+
+actual suspend fun requestMotionSensorPermission(): Boolean {
+    val granted = js("window.__motionPermissionGranted === true") as Boolean
+    Log.i("JsMotionSensor", "requestMotionSensorPermission() - granted: $granted")
+    return granted
+}
+
+actual fun needsMotionPermissionRequest(): Boolean {
+    val granted = js("window.__motionPermissionGranted === true") as Boolean
+    Log.i("JsMotionSensor", "needsMotionPermissionRequest() = ${!granted}")
+    return !granted
 }

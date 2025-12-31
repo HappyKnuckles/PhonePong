@@ -110,3 +110,13 @@ class IosMotionSensor : MotionSensor {
 actual fun createMotionSensor(): MotionSensor {
     return IosMotionSensor()
 }
+
+actual suspend fun requestMotionSensorPermission(): Boolean {
+    // iOS native app doesn't need special permission for motion sensors
+    return true
+}
+
+actual fun needsMotionPermissionRequest(): Boolean {
+    // iOS native app doesn't need special permission request
+    return false
+}

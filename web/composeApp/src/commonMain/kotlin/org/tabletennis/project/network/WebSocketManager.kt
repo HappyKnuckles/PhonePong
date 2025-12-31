@@ -37,8 +37,9 @@ data class ScoreEvent(
 
 class WebSocketManager {
 
-    private val serverUrl = "localhost" // 10.0.2.2 for emulator
+    private val serverUrl = "192.168.178.85" // 10.0.2.2 for emulator
     private val serverPort = 3000
+    private val useSecure = true // Use wss:// for HTTPS compatibility
 
     private val _bothPlayersConnected = MutableStateFlow(false)
     val bothPlayersConnected: StateFlow<Boolean> = _bothPlayersConnected
@@ -84,12 +85,15 @@ class WebSocketManager {
 
         connectionJob = scope.launch {
             try {
+                println("🔌 Connecting to WebSocket: wss://$serverUrl:$serverPort")
                 client.webSocket(
                     method = HttpMethod.Get,
                     host = serverUrl,
                     port = serverPort,
                     path = "/",
                     request = {
+                        // Use wss:// for secure WebSocket connection
+                        url.protocol = if (useSecure) io.ktor.http.URLProtocol.WSS else io.ktor.http.URLProtocol.WS
                         url.parameters.append("token", hostToken)
 
                         if (isCreating) {
@@ -100,6 +104,7 @@ class WebSocketManager {
                         }
                     }
                 ) {
+                    println("✅ WebSocket connected!")
                     for (frame in incoming) {
                         if (frame is Frame.Text) {
                             val message = frame.readText()
@@ -108,6 +113,7 @@ class WebSocketManager {
                     }
                 }
             } catch (e: Exception) {
+                println("❌ WebSocket connection failed: ${e.message}")
                 e.printStackTrace()
                 _bothPlayersConnected.value = false
             } finally {
