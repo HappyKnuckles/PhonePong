@@ -189,17 +189,8 @@ npm install
 
 3. Generate SSL certificates (required for HTTPS/WSS connections from mobile devices):
 
-On Windows (PowerShell):
+This step is only needed to be run the mobile version in the browser as iOS only allows Sensordata in an https context. On native devices you can run the full setup over http. 
 
-```powershell
-.\certs\generate-certs.ps1
-```
-
-On macOS/Linux:
-
-```bash
-node certs/generate-certs.js
-```
 
 4. (Optional) Configure server settings by editing `config/config.ts`:
 
