@@ -60,6 +60,7 @@ class PhysicsEngine {
           else {
             ball.state = 'BOUNCE';
             ball.z = 0;
+            return 'BOUNCE'; // Return BOUNCE event to notify bounce occurred
           }
         } else {
           ball.z = Math.max(0, ball.z - 15);

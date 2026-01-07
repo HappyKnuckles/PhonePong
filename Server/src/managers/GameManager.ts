@@ -187,7 +187,16 @@ export default class GameManager {
 
     if (result === 'FLOOR_HIT') {
       this.handleSideMiss();
+    } else if (result === 'BOUNCE') {
+      this.handleBounce();
     }
+  }
+
+  private handleBounce(): void {
+    console.log(`[Lobby ${this.lobbyId}] 🏓 Ball bounced on table`);
+    // Send bounce sound to both hosts
+    this.net.sendSound(1, 'bounce');
+    this.net.sendSound(2, 'bounce');
   }
 
   private handleSideMiss(): void {
@@ -221,6 +230,10 @@ export default class GameManager {
   private handleScore(): void {
     const { p1, p2 } = this.state.score;
     console.log(`[Lobby ${this.lobbyId}] 🏆 Score: P1:${p1} - P2:${p2}`);
+
+    // Send score sound to both players
+    this.net.sendSound(1, 'score');
+    this.net.sendSound(2, 'score');
 
     const totalPoints = p1 + p2;
     if (totalPoints % 2 === 0) {

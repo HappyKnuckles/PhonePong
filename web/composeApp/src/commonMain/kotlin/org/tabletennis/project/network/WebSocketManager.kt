@@ -35,6 +35,11 @@ data class ScoreEvent(
     val message: String
 )
 
+@Serializable
+data class SoundEvent(
+    val sound: String
+)
+
 class WebSocketManager {
 
     private val serverUrl = "192.168.178.85" // 10.0.2.2 for emulator
@@ -49,6 +54,9 @@ class WebSocketManager {
 
     private val _scoreEvent = MutableStateFlow<ScoreEvent?>(null)
     val scoreEvent: StateFlow<ScoreEvent?> = _scoreEvent
+
+    private val _soundEvent = MutableStateFlow<SoundEvent?>(null)
+    val soundEvent: StateFlow<SoundEvent?> = _soundEvent
 
     // Expose the Lobby ID so the UI can show it
     private val _currentLobbyId = MutableStateFlow<String?>(null)
@@ -171,7 +179,13 @@ class WebSocketManager {
                     val event = json.decodeFromString<ScoreEvent>(message)
                     _scoreEvent.value = event
                 }
-                // 5. Handle Lobby State (Occupied Roles)
+                // 5. Handle Sound
+                "sound" -> {
+                    val event = json.decodeFromString<SoundEvent>(message)
+                    _soundEvent.value = event
+                    println("🔊 Sound event received: ${event.sound}")
+                }
+                // 6. Handle Lobby State (Occupied Roles)
                 "lobby_state" -> {
                     val occupiedArray = rootObj["occupied"]?.jsonArray
                     if (occupiedArray != null) {
@@ -180,7 +194,7 @@ class WebSocketManager {
                         println("Occupied roles: $roles")
                     }
                 }
-                // 6. Handle Role Assignment (for auto-assign)
+                // 7. Handle Role Assignment (for auto-assign)
                 "role_assigned" -> {
                     val role = rootObj["role"]?.jsonPrimitive?.contentOrNull
                     if (role != null) {
@@ -188,7 +202,7 @@ class WebSocketManager {
                         println("Role assigned by server: $role")
                     }
                 }
-                // 7. Handle Game In Progress (rejoin running game)
+                // 8. Handle Game In Progress (rejoin running game)
                 "game_in_progress" -> {
                     println("Rejoining game in progress")
                     _bothPlayersConnected.value = true

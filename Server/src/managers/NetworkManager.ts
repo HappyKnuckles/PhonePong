@@ -78,8 +78,12 @@ class NetworkManager {
   }
 
   public sendSound(playerNum: 1 | 2, soundName: string): void {
-    const token = `player${playerNum}` as ClientRole;
-    this.sendJSON(token, { type: 'sound', sound: soundName });
+    // Send to both player (mobile) and host (web) for the same player number
+    const playerToken = `player${playerNum}` as ClientRole;
+    const hostToken = `host${playerNum}` as ClientRole;
+    
+    this.sendJSON(playerToken, { type: 'sound', sound: soundName });
+    this.sendJSON(hostToken, { type: 'sound', sound: soundName });
   }
 
   public syncHosts(ball: BallState): void {

@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Brush
+import org.tabletennis.project.audio.SoundEffectsPlayer
 import org.tabletennis.project.screens.game.core.GameColors
 import org.tabletennis.project.screens.game.core.TableSpecs
 import org.tabletennis.project.screens.game.logic.BallPhysics
@@ -24,6 +25,9 @@ fun GameScreen(
     webSocketManager: WebSocketManager,
     playerNumber: Int
 ) {
+    // Initialize sound effects
+    SoundEffectsPlayer(webSocketManager)
+    
     // STATE
     var score1 by remember { mutableIntStateOf(0) }
     var score2 by remember { mutableIntStateOf(0) }
