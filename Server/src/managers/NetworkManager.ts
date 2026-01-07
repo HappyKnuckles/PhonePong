@@ -8,6 +8,7 @@ interface BallState extends Partial<Ball> { }
 
 class NetworkManager {
   private clients: Record<ClientRole, WebSocket | null>;
+  private singleplayerMode: boolean = false;
 
   constructor() {
     this.clients = {
@@ -33,10 +34,24 @@ class NetworkManager {
     }
   }
 
+  public setSingleplayerMode(enabled: boolean): void {
+    this.singleplayerMode = enabled;
+  }
+
+  public isSingleplayerMode(): boolean {
+    return this.singleplayerMode;
+  }
+
   public isReady(): boolean {
     if (config.HEADLESS) {
       return !!(this.clients.player1 && this.clients.player2);
     }
+    
+    // In singleplayer mode, only need host1 and player1
+    if (this.singleplayerMode) {
+      return !!(this.clients.host1 && this.clients.player1);
+    }
+    
     return !!(
       this.clients.host1 &&
       this.clients.host2 &&
@@ -158,12 +173,22 @@ class NetworkManager {
   }
 
   /**
-   * Returns true if all four slots (host1, host2, player1, player2) are filled.
+   * Returns true if all required slots are filled.
+   * In singleplayer mode, only host1 and player1 are required.
    */
   public isFull(): boolean {
     const h1 = this.clients.host1;
-    const h2 = this.clients.host2;
     const p1 = this.clients.player1;
+
+    // In singleplayer mode, only need host1 and player1
+    if (this.singleplayerMode) {
+      return (
+        h1 !== null && h1.readyState === WebSocket.OPEN &&
+        p1 !== null && p1.readyState === WebSocket.OPEN
+      );
+    }
+
+    const h2 = this.clients.host2;
     const p2 = this.clients.player2;
 
     return (

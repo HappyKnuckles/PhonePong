@@ -62,6 +62,10 @@ class WebSocketManager {
     private val _assignedRole = MutableStateFlow<String?>(null)
     val assignedRole: StateFlow<String?> = _assignedRole
 
+    // Track if in singleplayer mode
+    private val _isSingleplayer = MutableStateFlow(false)
+    val isSingleplayer: StateFlow<Boolean> = _isSingleplayer
+
     private val client = HttpClient {
         install(WebSockets)
     }
@@ -79,13 +83,15 @@ class WebSocketManager {
      * @param hostToken: "host" for auto-assign, or "host1"/"host2" for specific slot
      * @param lobbyId: The 4-letter code if joining.
      * @param isCreating: True if we want to generate a new lobby.
+     * @param isSingleplayer: True if creating a singleplayer game with bot.
      */
-    fun connect(hostToken: String, lobbyId: String?, isCreating: Boolean) {
+    fun connect(hostToken: String, lobbyId: String?, isCreating: Boolean, isSingleplayer: Boolean = false) {
         disconnect()
+        _isSingleplayer.value = isSingleplayer
 
         connectionJob = scope.launch {
             try {
-                println("🔌 Connecting to WebSocket: wss://$serverUrl:$serverPort")
+                println("🔌 Connecting to WebSocket: wss://$serverUrl:$serverPort (Singleplayer: $isSingleplayer)")
                 client.webSocket(
                     method = HttpMethod.Get,
                     host = serverUrl,
@@ -97,7 +103,12 @@ class WebSocketManager {
                         url.parameters.append("token", hostToken)
 
                         if (isCreating) {
-                            url.parameters.append("action", "create")
+                            if (isSingleplayer) {
+                                url.parameters.append("action", "create_singleplayer")
+                                url.parameters.append("difficulty", "medium")
+                            } else {
+                                url.parameters.append("action", "create")
+                            }
                         } else if (!lobbyId.isNullOrEmpty()) {
                             url.parameters.append("lobby", lobbyId)
                             _currentLobbyId.value = lobbyId
@@ -194,5 +205,6 @@ class WebSocketManager {
         _currentLobbyId.value = null
         _occupiedRoles.value = emptyList()
         _assignedRole.value = null
+        _isSingleplayer.value = false
     }
 }

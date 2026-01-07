@@ -1,5 +1,6 @@
 package org.tabletennis.project.screens
 
+import GameMode
 import LobbySelectionScreen
 import androidx.compose.runtime.*
 import org.tabletennis.project.network.WebSocketManager
@@ -18,11 +19,13 @@ fun GameFlow() {
     var isCreatingGame by remember { mutableStateOf(false) }
     var selectedLobbyId by remember { mutableStateOf<String?>(null) }
     var playerNumber by remember { mutableStateOf(0) }
+    var isSingleplayerGame by remember { mutableStateOf(false) }
 
     // WebSocket Observables
     val bothPlayersConnected by webSocketManager.bothPlayersConnected.collectAsState()
     val activeLobbyId by webSocketManager.currentLobbyId.collectAsState()
     val assignedRole by webSocketManager.assignedRole.collectAsState()
+    val isSingleplayer by webSocketManager.isSingleplayer.collectAsState()
 
     // --- State Transitions ---
 
@@ -58,16 +61,18 @@ fun GameFlow() {
         // 1. Choose Create or Join
         GameState.LOBBY_SELECTION -> {
             LobbySelectionScreen(
-                onLobbySelected = { lobbyId, isCreating ->
+                onLobbySelected = { lobbyId, isCreating, gameMode ->
                     selectedLobbyId = lobbyId
                     isCreatingGame = isCreating
+                    isSingleplayerGame = gameMode == GameMode.SINGLEPLAYER
                     
                     // Use "host" token for auto-assignment
                     // Server will assign host1 or host2 based on availability
                     webSocketManager.connect(
                         hostToken = "host",
                         lobbyId = lobbyId,
-                        isCreating = isCreating
+                        isCreating = isCreating,
+                        isSingleplayer = gameMode == GameMode.SINGLEPLAYER
                     )
                     
                     // Skip player selection, go directly to waiting
@@ -100,7 +105,8 @@ fun GameFlow() {
         GameState.WAITING -> {
             WaitingScreen(
                 playerNumber = playerNumber,
-                lobbyId = activeLobbyId
+                lobbyId = activeLobbyId,
+                isSingleplayer = isSingleplayer
             )
         }
 

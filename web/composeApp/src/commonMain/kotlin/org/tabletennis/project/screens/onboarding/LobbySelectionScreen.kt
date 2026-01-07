@@ -8,9 +8,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+enum class GameMode {
+    MULTIPLAYER,
+    SINGLEPLAYER
+}
+
 @Composable
 fun LobbySelectionScreen(
-    onLobbySelected: (lobbyId: String?, isCreating: Boolean) -> Unit
+    onLobbySelected: (lobbyId: String?, isCreating: Boolean, gameMode: GameMode) -> Unit
 ) {
     var lobbyCode by remember { mutableStateOf("") }
 
@@ -30,9 +35,25 @@ fun LobbySelectionScreen(
             modifier = Modifier.padding(bottom = 48.dp)
         )
 
+        // --- Singleplayer Section ---
+        Button(
+            onClick = { onLobbySelected(null, true, GameMode.SINGLEPLAYER) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.tertiary,
+                contentColor = Color.White
+            )
+        ) {
+            Text("🤖 Singleplayer (vs Bot)", color = Color.White)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         // --- Create Section ---
         Button(
-            onClick = { onLobbySelected(null, true) },
+            onClick = { onLobbySelected(null, true, GameMode.MULTIPLAYER) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
@@ -72,7 +93,7 @@ fun LobbySelectionScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { onLobbySelected(lobbyCode, false) },
+            onClick = { onLobbySelected(lobbyCode, false, GameMode.MULTIPLAYER) },
             enabled = lobbyCode.length == 4,
             modifier = Modifier
                 .fillMaxWidth()

@@ -17,16 +17,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun WaitingScreen(playerNumber: Int, lobbyId: String? = null) {
+fun WaitingScreen(playerNumber: Int, lobbyId: String? = null, isSingleplayer: Boolean = false) {
     val playerColor = when (playerNumber) {
         1 -> Color(0xFFF44336)
         2 -> Color(0xFF4CAF50)
         else -> Color(0xFF06D6A0)
     }
 
-    val playerText = when (playerNumber) {
-        0 -> "Connecting..."
+    val playerText = when {
+        isSingleplayer -> "Singleplayer Mode"
+        playerNumber == 0 -> "Connecting..."
         else -> "You are Player $playerNumber"
+    }
+
+    val waitingText = if (isSingleplayer) {
+        "Waiting for you to connect your phone..."
+    } else {
+        "Waiting for opponent..."
     }
 
     Box(
@@ -80,7 +87,7 @@ fun WaitingScreen(playerNumber: Int, lobbyId: String? = null) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    "Waiting for opponent...",
+                    waitingText,
                     fontSize = 18.sp,
                     color = Color.White
                 )
@@ -120,12 +127,27 @@ fun WaitingScreen(playerNumber: Int, lobbyId: String? = null) {
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold
                             )
-                            Text(
-                                "Select: Player $playerNumber",
-                                fontSize = 16.sp,
-                                color = playerColor,
-                                fontWeight = FontWeight.Bold
-                            )
+                            if (isSingleplayer) {
+                                Text(
+                                    "Select: Player 1 (You vs Bot)",
+                                    fontSize = 16.sp,
+                                    color = playerColor,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "🤖 Bot difficulty: Medium",
+                                    fontSize = 14.sp,
+                                    color = Color.White.copy(alpha = 0.7f)
+                                )
+                            } else {
+                                Text(
+                                    "Select: Player $playerNumber",
+                                    fontSize = 16.sp,
+                                    color = playerColor,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }

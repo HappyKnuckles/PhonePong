@@ -1,33 +1,51 @@
 import config from '../../config/config';
 import GameState from '../core/GameState';
 import PhysicsEngine from '../core/PhysicsEngine';
+import BotAI, { BotDifficulty } from '../core/BotAI';
 import NetworkManager, { ClientRole } from './NetworkManager';
 import WebSocket from 'ws';
+
+export type GameMode = 'multiplayer' | 'singleplayer';
 
 export default class GameManager {
   public lobbyId: string;
   public state: GameState;
   public physics: PhysicsEngine;
   public net: NetworkManager;
+  public gameMode: GameMode;
 
   private physicsInterval: NodeJS.Timeout | null;
   private broadcastInterval: NodeJS.Timeout | null;
+  private botInterval: NodeJS.Timeout | null;
+  private bot: BotAI | null;
   private onDestroy: () => void;
 
-  constructor(lobbyId: string, onDestroy: () => void) {
+  constructor(lobbyId: string, onDestroy: () => void, gameMode: GameMode = 'multiplayer', botDifficulty: BotDifficulty = 'medium') {
     this.lobbyId = lobbyId;
     this.onDestroy = onDestroy;
 
     this.state = new GameState();
     this.physics = new PhysicsEngine();
     this.net = new NetworkManager();
+    this.gameMode = gameMode;
 
     this.physicsInterval = null;
     this.broadcastInterval = null;
+    this.botInterval = null;
+    this.bot = null;
+
+    if (gameMode === 'singleplayer') {
+      this.bot = new BotAI(botDifficulty);
+      this.net.setSingleplayerMode(true);
+      console.log(`[Lobby ${lobbyId}] 🤖 Singleplayer mode enabled with ${botDifficulty} bot`);
+    }
   }
 
   public cleanup(): void {
     this.stopGameLoop();
+    if (this.bot) {
+      this.bot.cleanup();
+    }
   }
 
   // --- Connectivity ---
@@ -115,11 +133,19 @@ export default class GameManager {
         this.net.syncHosts(this.state.ball);
       }
     }, config.FREQUENCY_MS);
+
+    // Start bot AI loop for singleplayer mode
+    if (this.gameMode === 'singleplayer' && this.bot) {
+      this.botInterval = setInterval(() => {
+        this.updateBot();
+      }, 50); // Bot AI check at 20 FPS
+    }
   }
 
   public stopGameLoop(): void {
     if (this.physicsInterval) clearInterval(this.physicsInterval);
     if (this.broadcastInterval) clearInterval(this.broadcastInterval);
+    if (this.botInterval) clearInterval(this.botInterval);
   }
 
 
@@ -223,6 +249,43 @@ export default class GameManager {
     }
 
     this.state.lastHitDirection = this.state.ball.d;
+  }
+
+  // --- Bot Logic ---
+  private updateBot(): void {
+    if (!this.bot || this.gameMode !== 'singleplayer') return;
+    if (!this.state.isRunning) return;
+    if (this.state.hitTimeout && Date.now() < this.state.hitTimeout) return;
+
+    // Check if it's bot's turn to serve (bot is player 2)
+    const isBotServing = this.state.swingToStartPlayer === 2;
+    
+    if (isBotServing) {
+      // Add a small delay before serving
+      setTimeout(() => {
+        const swingSpeed = this.bot?.shouldSwing(this.state.ball, true);
+        if (swingSpeed !== null && swingSpeed !== undefined) {
+          console.log(`[Lobby ${this.lobbyId}] 🤖 Bot serving (Speed: ${swingSpeed})`);
+          this.applyHit(swingSpeed, null, true);
+          this.state.swingToStartPlayer = 0;
+        }
+      }, this.bot.getReactionDelay() + 500); // Extra delay for serve
+      return;
+    }
+
+    // Check if bot should swing during rally
+    if (this.state.swingToStartPlayer === 0) {
+      const swingSpeed = this.bot.shouldSwing(this.state.ball, false);
+      if (swingSpeed !== null) {
+        // Add reaction delay
+        setTimeout(() => {
+          if (this.physics.isCollision(this.state.ball.y) && this.state.ball.d === 1) {
+            console.log(`[Lobby ${this.lobbyId}] 🤖 Bot hit (Speed: ${swingSpeed})`);
+            this.applyHit(swingSpeed, null, false);
+          }
+        }, this.bot.getReactionDelay());
+      }
+    }
   }
 
   // --- Helpers ---

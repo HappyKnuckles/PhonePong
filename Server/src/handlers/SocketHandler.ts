@@ -2,6 +2,8 @@ import { Server, WebSocket } from 'ws';
 import { IncomingMessage } from 'http';
 import lobbyManager from '../managers/LobbyManager';
 import { ClientRole } from '../managers/NetworkManager';
+import { GameMode } from '../managers/GameManager';
+import { BotDifficulty } from '../core/BotAI';
 import { URLSearchParams } from 'url';
 
 interface PlayerInput {
@@ -34,12 +36,15 @@ export default (wss: Server) => {
     // --- LOBBY LOGIC ---
     let gameInstance;
 
-    if (action === 'create') {
-      lobbyId = lobbyManager.createLobby();
+    if (action === 'create' || action === 'create_singleplayer') {
+      const gameMode: GameMode = action === 'create_singleplayer' ? 'singleplayer' : 'multiplayer';
+      const botDifficulty: BotDifficulty = (params.get('difficulty') as BotDifficulty) || 'medium';
+      
+      lobbyId = lobbyManager.createLobby(gameMode, botDifficulty);
       gameInstance = lobbyManager.getLobby(lobbyId);
 
       if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'lobby_created', lobbyId }));
+        ws.send(JSON.stringify({ type: 'lobby_created', lobbyId, gameMode }));
       }
     } else if (lobbyId) {
       lobbyId = lobbyId.toUpperCase();

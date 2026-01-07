@@ -1,4 +1,5 @@
-import GameManager from './GameManager';
+import GameManager, { GameMode } from './GameManager';
+import { BotDifficulty } from '../core/BotAI';
 
 class LobbyManager {
   private lobbies: Map<string, GameManager>;
@@ -7,11 +8,11 @@ class LobbyManager {
     this.lobbies = new Map();
   }
 
-  public createLobby(): string {
+  public createLobby(gameMode: GameMode = 'multiplayer', botDifficulty: BotDifficulty = 'medium'): string {
     const lobbyId = this.generateLobbyId();
-    const game = new GameManager(lobbyId, () => this.removeLobby(lobbyId));
+    const game = new GameManager(lobbyId, () => this.removeLobby(lobbyId), gameMode, botDifficulty);
     this.lobbies.set(lobbyId, game);
-    console.log(`✨ Lobby created: ${lobbyId}`);
+    console.log(`✨ Lobby created: ${lobbyId} (Mode: ${gameMode})`);
     return lobbyId;
   }
 
