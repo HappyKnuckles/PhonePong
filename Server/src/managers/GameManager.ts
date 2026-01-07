@@ -170,7 +170,11 @@ export default class GameManager {
       const targetPlayer = this.getTargetPlayer();
 
       if (playerNum === targetPlayer) {
-        if (this.physics.isCollision(this.state.ball.y)) {
+        // Check collision and cooldown to prevent double-hitting
+        const now = Date.now();
+        const timeSinceLastHit = now - this.state.lastHitTime;
+        
+        if (this.physics.isCollision(this.state.ball.y) && timeSinceLastHit >= config.HIT_COOLDOWN) {
           this.applyHit(speed, null, false);
           this.net.sendSound(playerNum, 'hit');
         }
@@ -199,6 +203,7 @@ export default class GameManager {
   private applyHit(velocity: number, specificGoal: number | null, isServe: boolean = false): void {
     this.physics.applyHit(this.state.ball, velocity, specificGoal, isServe);
     this.state.lastHitDirection = this.state.ball.d;
+    this.state.lastHitTime = Date.now();
     this.notifyCollision();
   }
 

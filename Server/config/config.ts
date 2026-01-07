@@ -8,5 +8,6 @@ export default {
   HEADLESS: false,      // test without hosts
   TEST: false,          // run test sequence on start
   USE_TIMEOUT: 1000,    // enable timeout after score
+  HIT_COOLDOWN: 200,    // minimum time (ms) between consecutive hits to prevent double-hitting
   PORT: process.env.PORT ? Number(process.env.PORT) : 3000
 };

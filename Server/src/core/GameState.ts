@@ -8,6 +8,7 @@ export default class GameState {
   public isRunning!: boolean;
   public lastHitDirection!: number;
   public hitTimeout!: number | null;
+  public lastHitTime!: number;
   public ball!: Ball;
 
   constructor() {
@@ -20,6 +21,7 @@ export default class GameState {
     this.currentServer = 1; // Default P1 starts
     this.isRunning = false;
     this.hitTimeout = null;
+    this.lastHitTime = 0;
     this.resetBall();
   }
 
