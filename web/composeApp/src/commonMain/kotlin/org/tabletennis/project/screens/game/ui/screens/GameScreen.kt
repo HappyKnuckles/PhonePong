@@ -11,7 +11,6 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Brush
 import org.tabletennis.project.screens.game.core.GameColors
 import org.tabletennis.project.screens.game.core.TableSpecs
-import org.tabletennis.project.screens.game.logic.BallPhysics
 import org.tabletennis.project.screens.game.logic.GameCoordinates
 import org.tabletennis.project.screens.game.ui.components.BigMessageOverlay
 import org.tabletennis.project.screens.game.ui.components.ScoreOverlay
@@ -32,11 +31,6 @@ fun GameScreen(
     var ballX by remember { mutableFloatStateOf(0f) }
     var ballDepth by remember { mutableFloatStateOf(0f) }
     var ballHeight by remember { mutableFloatStateOf(0f) }
-    var isMovingToPositive by remember { mutableStateOf(true) }
-
-    var currentBounceDist by remember {
-        mutableFloatStateOf(GameCoordinates.TableDims.LENGTH / 2 * 0.35f)
-    }
 
     // NETWORK EVENTS
     val coordinatesEvent by webSocketManager.coordinatesEvent.collectAsState()
@@ -45,12 +39,6 @@ fun GameScreen(
     LaunchedEffect(coordinatesEvent) {
         coordinatesEvent?.let { event ->
             val (newX, newDepth) = GameCoordinates.mapGameToTable(event.x, event.y)
-
-            if (newDepth != ballDepth) {
-                isMovingToPositive = newDepth > ballDepth
-            }
-
-
 
             ballX = newX
             ballDepth = newDepth
@@ -105,15 +93,6 @@ fun GameScreen(
 
                         val doDrawBall = {
                             if (ballX != 0f || ballDepth != 0f) {
-//                                val dynamicHeight = BallPhysics.calculateBallHeight(
-//                                    ballX = ballX,
-//                                    ballZ = ballZ,
-//                                    isMovingToPositive = isMovingToPositive,
-//                                    bounceDist = currentBounceDist,
-//                                    halfTableLength = halfL,
-//                                    halfTableWidth = halfW,
-//                                    ballRadius = TableSpecs.BALL_RADIUS
-//                                )
                                 drawBall(
                                     project = project,
                                     ballX = ballX,

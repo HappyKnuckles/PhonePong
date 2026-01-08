@@ -5,7 +5,6 @@ import LobbySelectionScreen
 import androidx.compose.runtime.*
 import org.tabletennis.project.network.WebSocketManager
 import org.tabletennis.project.screens.game.ui.screens.GameScreen
-import org.tabletennis.project.screens.onboarding.PlayerSelectionScreen
 import org.tabletennis.project.screens.onboarding.WaitingScreen
 
 @Composable
@@ -70,32 +69,11 @@ fun GameFlow() {
                     // Server will assign host1 or host2 based on availability
                     webSocketManager.connect(
                         hostToken = "host",
-                        lobbyId = lobbyId,
-                        isCreating = isCreating,
-                        isSingleplayer = gameMode == GameMode.SINGLEPLAYER
+                        lobbyId = selectedLobbyId,
+                        isCreating = isCreatingGame,
+                        isSingleplayer = isSingleplayerGame
                     )
                     
-                    // Skip player selection, go directly to waiting
-                    gameState = GameState.WAITING
-                }
-            )
-        }
-
-        // 2. Player Selection - now optional, kept for backward compatibility
-        GameState.PLAYER_SELECTION -> {
-            PlayerSelectionScreen(
-                onPlayerSelected = { number ->
-                    playerNumber = number
-
-                    // Manual selection - use specific token
-                    val token = "host$number" // Maps 1 -> host1, 2 -> host2
-
-                    webSocketManager.connect(
-                        hostToken = token,
-                        lobbyId = selectedLobbyId,
-                        isCreating = isCreatingGame
-                    )
-
                     gameState = GameState.WAITING
                 }
             )
