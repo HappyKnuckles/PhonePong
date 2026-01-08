@@ -189,7 +189,7 @@ npm install
 
 3. Generate SSL certificates (required for HTTPS/WSS connections from mobile devices):
 
-This step is only needed to be run the mobile version in the browser as iOS only allows Sensordata in an https context. On native devices you can run the full setup over http. 
+This step is only needed to be able to run the mobile version in the browser as iOS only allows access to sensordata in an https context. On native devices you can run the full setup over http. 
 
 
 4. (Optional) Configure server settings by editing `config/config.ts`:
@@ -346,9 +346,8 @@ The controller interface will open in your browser. Note that motion sensors may
 
 1. **Start the Server**: Run the WebSocket server as described above
 2. **Open the Display**: Launch the web display on one or more devices:
-   - Option 1: Single large screen (TV, monitor, or projector)
-   - Option 2: Multiple browsers/devices showing the same game simultaneously
-   - Each display will show identical real-time game state
+   - Multiple browsers/devices showing the same game simultaneously
+   - Each display will show mirrored real-time game state (each the own side of the table)
    - All displays must join the same lobby using the lobby code
 3. **Connect Controllers**: Open the mobile controller app on each player's smartphone
 
@@ -368,13 +367,12 @@ The controller interface will open in your browser. Note that motion sensors may
 
 3. **Starting the Game**:
 
-   - The game starts automatically when both players and at least one display host are connected
+   - The game starts automatically when both players and displays are connected
    - Multiple display devices can join the same lobby to show the game on different screens
    - One player will be designated to serve first
 
 4. **Controls**:
 
-   - **Calibration**: Hold your phone in a comfortable position and tap "Calibrate" before starting
    - **Serving**: Swing your phone downward to serve the ball
    - **Hitting**: Swing your phone to hit the ball back to your opponent
    - **Swing Speed**: The speed of your swing determines the ball's velocity
@@ -387,7 +385,6 @@ The controller interface will open in your browser. Note that motion sensors may
 
 ### Tips
 
-- Calibrate your controller before each game for best accuracy
 - Use controlled, deliberate swings for better accuracy
 - Timing is crucial - swing just as the ball approaches your side
 - Enable debug mode in settings to see sensor data and fine-tune your technique
@@ -448,65 +445,6 @@ Server-side physics simulation includes:
 - **Minimal Payloads**: Swing events contain only essential data
 - **Adaptive Update Rate**: Server adjusts update frequency based on game state
 
-## Project Structure
-
-```
-PhonePong/
-├── Server/                        # Node.js WebSocket server
-│   ├── src/
-│   │   ├── core/
-│   │   │   ├── GameState.ts      # Game state management
-│   │   │   ├── PhysicsEngine.ts  # Ball physics calculations
-│   │   │   └── types.ts          # TypeScript interfaces
-│   │   ├── handlers/
-│   │   │   └── SocketHandler.ts  # WebSocket connection handling
-│   │   └── managers/
-│   │       ├── GameManager.ts    # Game loop and logic
-│   │       ├── LobbyManager.ts   # Lobby creation and management
-│   │       └── NetworkManager.ts # Message broadcasting
-│   ├── config/
-│   │   └── config.ts             # Server configuration
-│   ├── certs/                    # SSL certificates
-│   ├── server.ts                 # Entry point
-│   └── package.json
-│
-├── web/                          # Kotlin Multiplatform web display
-│   └── composeApp/
-│       └── src/
-│           ├── commonMain/
-│           │   └── kotlin/org/tabletennis/project/
-│           │       ├── screens/
-│           │       │   ├── game/
-│           │       │   │   ├── core/          # Game constants and theme
-│           │       │   │   ├── logic/         # Ball physics and coordinates
-│           │       │   │   ├── render/        # Canvas rendering
-│           │       │   │   └── ui/            # Game screen components
-│           │       │   └── onboarding/        # Lobby and waiting screens
-│           │       └── network/
-│           │           └── WebSocketManager.kt # WebSocket client
-│           ├── jsMain/           # JavaScript-specific code
-│           ├── wasmJsMain/       # WebAssembly-specific code
-│           └── jvmMain/          # Desktop JVM-specific code
-│
-└── mobile/                       # Kotlin Multiplatform mobile controller
-    └── composeApp/
-        └── src/
-            ├── commonMain/
-            │   └── kotlin/com/example/insanecrossmobilepingpongapp/
-            │       ├── controller/
-            │       │   ├── ControllerViewModel.kt # Main controller logic
-            │       │   └── SwingDetector.kt       # Swing gesture detection
-            │       ├── model/                      # Data models
-            │       ├── network/
-            │       │   └── WebSocketClient.kt      # WebSocket client
-            │       ├── sensor/
-            │       │   └── MotionSensor.kt         # Motion sensor interface
-            │       ├── ui/                         # UI components
-            │       └── util/                       # Utilities
-            ├── androidMain/        # Android-specific implementations
-            ├── iosMain/           # iOS-specific implementations
-            └── jsMain/            # Web-specific implementations
-```
 
 ## License
 
@@ -518,7 +456,7 @@ This project is available under the MIT License. See individual component README
 
 - Ensure the server is running and accessible from your network
 - Verify that all IP addresses in the configuration files match your server's local IP
-- Check that you're using HTTPS/WSS (required for mobile devices)
+- Check that you're using HTTPS/WSS (required for mobile browser version)
 - Verify firewall settings allow connections on port 3000
 - On iOS, ensure you've granted motion sensor permissions
 - Try accessing the server's root URL (`https://your-server-ip:3000`) in the mobile browser first to accept the SSL certificate
@@ -536,7 +474,6 @@ This project is available under the MIT License. See individual component README
 
 - On iOS 13+, you must explicitly grant permission through the browser
 - Ensure the device is not in a restrictive mode (Low Power Mode, etc.)
-- Try calibrating the controller before starting the game
 - Check that the browser supports DeviceOrientation API
 
 ### Laggy Gameplay
@@ -553,4 +490,4 @@ This project is available under the MIT License. See individual component README
 - Refresh the browser and reconnect
 - Verify server is broadcasting updates (check server logs)
 
-For more issues, check the individual component README files or the server logs for detailed error messages.
+For more issues, you can contact me over <a href="mailto:nicolashoffmann01@protonmail.com">nicolashoffmann01@protonmail.com</a>
