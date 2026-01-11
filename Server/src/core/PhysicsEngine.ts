@@ -121,9 +121,13 @@ class PhysicsEngine {
     return ball;
   }
 
-  public isCollision(ballY: number): boolean {
+  public isCollision(ballY: number, playerDirection: number): boolean {
     const absY = Math.abs(ballY);
-    return absY >= config.INNERBOUND && absY <= config.OUTERBOUND;
+    const isInHitZone = absY >= config.INNERBOUND && absY <= config.OUTERBOUND;
+
+    const isOnPlayerSide = Math.sign(ballY) === playerDirection;
+
+    return isInHitZone && isOnPlayerSide;
   }
 }
 

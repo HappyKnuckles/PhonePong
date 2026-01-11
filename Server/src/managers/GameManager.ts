@@ -173,8 +173,11 @@ export default class GameManager {
         // Check collision and cooldown to prevent double-hitting
         const now = Date.now();
         const timeSinceLastHit = now - this.state.lastHitTime;
-        
-        if (this.physics.isCollision(this.state.ball.y) && timeSinceLastHit >= config.HIT_COOLDOWN) {
+
+        // Player 1 has direction -1, Player 2 has direction 1
+        const playerDirection = playerNum === 1 ? -1 : 1;
+
+        if (this.physics.isCollision(this.state.ball.y, playerDirection) && timeSinceLastHit >= config.HIT_COOLDOWN) {
           this.applyHit(speed, null, false);
           this.net.sendSound(playerNum, 'hit');
         }
@@ -264,7 +267,7 @@ export default class GameManager {
 
     // Check if it's bot's turn to serve (bot is player 2)
     const isBotServing = this.state.swingToStartPlayer === 2;
-    
+
     if (isBotServing) {
       // Add a small delay before serving
       setTimeout(() => {
@@ -284,7 +287,8 @@ export default class GameManager {
       if (swingSpeed !== null) {
         // Add reaction delay
         setTimeout(() => {
-          if (this.physics.isCollision(this.state.ball.y) && this.state.ball.d === 1) {
+          // Bot is Player 2 with direction 1
+          if (this.physics.isCollision(this.state.ball.y, 1) && this.state.ball.d === 1) {
             console.log(`[Lobby ${this.lobbyId}] 🤖 Bot hit (Speed: ${swingSpeed})`);
             this.applyHit(swingSpeed, null, false);
           }
