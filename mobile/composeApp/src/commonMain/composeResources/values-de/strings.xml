@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Ping Pong Online</string>
+    <string name="app_name">PhonePong</string>
     <string name="choose_player">Wähle deinen Spieler</string>
     <string name="player_1">Spieler 1</string>
     <string name="player_2">Spieler 2</string>

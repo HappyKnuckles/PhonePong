@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.insanecrossmobilepingpongapp.model.PlayerRole
 import com.example.insanecrossmobilepingpongapp.network.ConnectionState
+import com.example.insanecrossmobilepingpongapp.ui.components.LobbyCodeBadge
 import org.jetbrains.compose.resources.painterResource
 import insanecrossmobilepingpongapp.composeapp.generated.resources.Res
 import insanecrossmobilepingpongapp.composeapp.generated.resources.racket_black
@@ -36,6 +37,7 @@ fun GameScreen(
     onDisconnect: () -> Unit,
     debugContent: @Composable () -> Unit,
     isDarkTheme: Boolean,
+    lobbyCode: String = "",
     modifier: Modifier = Modifier
 ) {
     // Determine racket resource based on player role
@@ -94,6 +96,14 @@ fun GameScreen(
                 .statusBarsPadding(), // Add padding for status bar
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // Lobby Code Badge (if available)
+            if (lobbyCode.isNotEmpty()) {
+                LobbyCodeBadge(
+                    lobbyCode = lobbyCode,
+                    isDarkTheme = isDarkTheme
+                )
+            }
+            
             // Debug Toggle Button
             FloatingActionButton(
                 onClick = onToggleDebug,
@@ -104,8 +114,9 @@ fun GameScreen(
                 modifier = Modifier.size(56.dp)
             ) {
                 Text(
-                    text = if (isDebugVisible) "✕" else "🐞",
-                    fontSize = 24.sp,
+                    text = if (isDebugVisible) "X" else "D",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
                     color = if (isDebugVisible) Color.White else Color.Gray
                 )
             }
@@ -124,12 +135,6 @@ fun GameScreen(
                 contentColor = Color.White
             )
         ) {
-            Text(
-                text = "✕",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = stringResource(Res.string.disconnect_button),
                 fontSize = 16.sp,

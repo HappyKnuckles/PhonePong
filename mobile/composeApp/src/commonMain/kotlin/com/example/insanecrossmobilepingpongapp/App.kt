@@ -75,7 +75,8 @@ fun App(
                                 onClose = { viewModel.toggleDebug() }
                             )
                         },
-                        isDarkTheme = isDarkTheme
+                        isDarkTheme = isDarkTheme,
+                        lobbyCode = state.lobbyId
                     )
                 }
             }

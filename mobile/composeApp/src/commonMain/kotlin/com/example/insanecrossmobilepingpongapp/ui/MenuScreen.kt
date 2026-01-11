@@ -47,6 +47,7 @@ fun MenuScreen(
         Brush.verticalGradient(colors = listOf(Color(0xFFF0F4F8), Color(0xFFD9E2EC)))
     }
 
+    val cardColor = if (isDarkTheme) Color(0xFF2A2A3E) else Color.White
     val textColor = if (isDarkTheme) Color.White else Color(0xFF102A43)
     val subTextColor = if (isDarkTheme) Color(0xFFBBBBBB) else Color(0xFF486581)
 
@@ -57,76 +58,68 @@ fun MenuScreen(
         contentAlignment = Alignment.Center
     ) {
         // Theme Toggle
-        Box(modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)) {
+        Box(modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).statusBarsPadding()) {
             IconButton(onClick = { onThemeToggle(!isDarkTheme) }) {
-                Text(text = if (isDarkTheme) "☀️" else "🌙", fontSize = 24.sp)
+                Text(
+                    text = if (isDarkTheme) "Light" else "Dark",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = textColor
+                )
             }
         }
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
+        Card(
+            modifier = Modifier
+                .width(600.dp)
+                .padding(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = cardColor
+            ),
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
         ) {
-            // Title Section
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(48.dp)
             ) {
-                Text(
-                    text = stringResource(Res.string.app_name),
-                    style = MaterialTheme.typography.displayLarge.copy(
-                        fontSize = 42.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = textColor
-                    ),
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = "Enter lobby code from your screen",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontSize = 16.sp,
-                        color = subTextColor
-                    ),
-                    textAlign = TextAlign.Center
-                )
-            }
+                // Title Section
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = stringResource(Res.string.app_name),
+                        style = MaterialTheme.typography.displayLarge.copy(
+                            fontSize = 36.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor
+                        ),
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "Mobile Controller",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF06D6A0),
+                            letterSpacing = 2.sp
+                        ),
+                        textAlign = TextAlign.Center
+                    )
+                }
 
-            // Lobby Code Input
-            OutlinedTextField(
-                value = lobbyCode,
-                onValueChange = { 
-                    lobbyCode = it.uppercase().filter { char -> char.isLetter() }.take(4)
-                },
-                label = { Text("Lobby Code") },
-                placeholder = { Text("ABCD") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = textColor,
-                    unfocusedTextColor = textColor,
-                    focusedBorderColor = Color(0xFF06D6A0),
-                    unfocusedBorderColor = subTextColor,
-                    focusedLabelColor = Color(0xFF06D6A0),
-                    unfocusedLabelColor = subTextColor,
-                    cursorColor = Color(0xFF06D6A0)
-                ),
-                textStyle = MaterialTheme.typography.headlineMedium.copy(
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    letterSpacing = 8.sp
-                ),
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
-            )
+                Divider(
+                    color = if (isDarkTheme) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.1f),
+                    thickness = 1.dp
+                )
 
-            // Player Selection Section
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+                // Instructions
                 Text(
-                    text = "Select your player (match your screen)",
+                    text = "Enter the lobby code from your screen",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 14.sp,
                         color = subTextColor
@@ -134,131 +127,181 @@ fun MenuScreen(
                     textAlign = TextAlign.Center
                 )
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                // Lobby Code Input
+                OutlinedTextField(
+                    value = lobbyCode,
+                    onValueChange = { 
+                        lobbyCode = it.uppercase().filter { char -> char.isLetter() }.take(4)
+                    },
+                    label = { Text("Lobby Code") },
+                    placeholder = { Text("ABCD", fontSize = 28.sp) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = textColor,
+                        unfocusedTextColor = textColor,
+                        focusedBorderColor = Color(0xFF06D6A0),
+                        unfocusedBorderColor = subTextColor.copy(alpha = 0.5f),
+                        focusedLabelColor = Color(0xFF06D6A0),
+                        unfocusedLabelColor = subTextColor,
+                        cursorColor = Color(0xFF06D6A0)
+                    ),
+                    textStyle = MaterialTheme.typography.headlineMedium.copy(
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        letterSpacing = 8.sp
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Player Selection Section
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    PlayerSelectButton(
-                        text = "Player 1",
-                        color = Color(0xFFE63946),
-                        isSelected = selectedRole == PlayerRole.PLAYER1,
-                        onClick = { selectedRole = PlayerRole.PLAYER1 },
-                        modifier = Modifier.weight(1f)
+                    Text(
+                        text = "SELECT YOUR PLAYER",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = subTextColor,
+                            letterSpacing = 1.5.sp
+                        ),
+                        textAlign = TextAlign.Center
                     )
 
-                    PlayerSelectButton(
-                        text = "Player 2",
-                        color = Color(0xFF06D6A0),
-                        isSelected = selectedRole == PlayerRole.PLAYER2,
-                        onClick = { selectedRole = PlayerRole.PLAYER2 },
-                        modifier = Modifier.weight(1f)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        PlayerSelectButton(
+                            text = "Player 1",
+                            color = Color(0xFFE63946),
+                            isSelected = selectedRole == PlayerRole.PLAYER1,
+                            onClick = { selectedRole = PlayerRole.PLAYER1 },
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        PlayerSelectButton(
+                            text = "Player 2",
+                            color = Color(0xFF06D6A0),
+                            isSelected = selectedRole == PlayerRole.PLAYER2,
+                            onClick = { selectedRole = PlayerRole.PLAYER2 },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    
+                    Text(
+                        text = "Match your screen player number",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = if (isDarkTheme) Color(0xFFFFAA00) else Color(0xFFB86E00),
+                            fontSize = 11.sp
+                        ),
+                        textAlign = TextAlign.Center
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Motion Permission Button (Only visible if needed)
-            if (!permissionGranted && needsMotionPermissionRequest()) {
-                Button(
-                    onClick = {
-                        // Call the injected handler directly (synchronous call chain for iOS)
-                        requestMotionPermissionHandler { success ->
-                            permissionGranted = success
-                            permissionDenied = !success
+                // Motion Permission Button (Only visible if needed)
+                if (!permissionGranted && needsMotionPermissionRequest()) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Button(
+                            onClick = {
+                                requestMotionPermissionHandler { success ->
+                                    permissionGranted = success
+                                    permissionDenied = !success
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth().height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF2196F3),
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "Enable Motion Sensors",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2196F3),
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = "📱 Enable Motion Sensors",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
+                        
+                        Text(
+                            text = "Required for paddle control",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = if (isDarkTheme) Color(0xFFAAAAFF) else Color(0xFF2196F3),
+                                fontSize = 11.sp
+                            ),
+                            textAlign = TextAlign.Center
                         )
-                    )
+                    }
                 }
                 
-                Text(
-                    text = "Tap to allow motion sensor access",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = if (isDarkTheme) Color(0xFFAAAAFF) else Color(0xFF2196F3),
-                        fontSize = 12.sp
-                    ),
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-            
-            if (permissionDenied) {
-                Text(
-                    text = "⚠️ Denied. Check Safari Settings -> Motion Access.",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = Color(0xFFFF5555),
-                        fontSize = 12.sp
-                    ),
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+                if (permissionDenied) {
+                    Text(
+                        text = "Permission denied. Check Safari Settings > Motion Access",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color(0xFFFF5555),
+                            fontSize = 11.sp
+                        ),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                }
 
-            // Join Button
-            Button(
-                onClick = { 
-                    selectedRole?.let { role ->
-                        if (!permissionGranted && needsMotionPermissionRequest()) {
-                            // Try permission one last time
-                            requestMotionPermissionHandler { success ->
-                                permissionGranted = success
-                                permissionDenied = !success
-                                if (success) {
-                                    onJoinLobby(lobbyCode, role)
+                // Join Button
+                Button(
+                    onClick = { 
+                        selectedRole?.let { role ->
+                            if (!permissionGranted && needsMotionPermissionRequest()) {
+                                requestMotionPermissionHandler { success ->
+                                    permissionGranted = success
+                                    permissionDenied = !success
+                                    if (success) {
+                                        onJoinLobby(lobbyCode, role)
+                                    }
                                 }
+                            } else {
+                                onJoinLobby(lobbyCode, role)
                             }
-                        } else {
-                            onJoinLobby(lobbyCode, role)
                         }
-                    }
-                },
-                enabled = lobbyCode.length == 4 && selectedRole != null,
-                modifier = Modifier.fillMaxWidth().height(64.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = when (selectedRole) {
-                        PlayerRole.PLAYER1 -> Color(0xFFE63946)
-                        PlayerRole.PLAYER2 -> Color(0xFF06D6A0)
-                        null -> Color(0xFF888888)
                     },
-                    contentColor = Color.White,
-                    disabledContainerColor = Color(0xFF888888).copy(alpha = 0.3f),
-                    disabledContentColor = Color.White.copy(alpha = 0.5f)
-                ),
-                shape = RoundedCornerShape(16.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
-            ) {
-                Text(
-                    text = "Join Game",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = 24.sp,
+                    enabled = lobbyCode.length == 4 && selectedRole != null,
+                    modifier = Modifier.fillMaxWidth().height(64.dp).navigationBarsPadding(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = when (selectedRole) {
+                            PlayerRole.PLAYER1 -> Color(0xFFE63946)
+                            PlayerRole.PLAYER2 -> Color(0xFF06D6A0)
+                            null -> Color(0xFF888888)
+                        },
+                        contentColor = Color.White,
+                        disabledContainerColor = Color(0xFF888888).copy(alpha = 0.3f),
+                        disabledContentColor = Color.White.copy(alpha = 0.5f)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = if (lobbyCode.length == 4 && selectedRole != null) 8.dp else 2.dp
+                    )
+                ) {
+                    Text(
+                        text = "Join Game",
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
                     )
-                )
+                }
             }
-
-            // Info Text
-            Text(
-                text = "⚠️ Make sure to select the same player\nas shown on your web screen",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = if (isDarkTheme) Color(0xFFFFAA00) else Color(0xFFB86E00),
-                    fontSize = 13.sp
-                ),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
         }
     }
 }

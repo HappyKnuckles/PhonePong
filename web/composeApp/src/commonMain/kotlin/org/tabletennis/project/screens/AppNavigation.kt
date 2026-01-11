@@ -93,7 +93,8 @@ fun GameFlow() {
             if (playerNumber > 0) {
                 GameScreen(
                     webSocketManager = webSocketManager,
-                    playerNumber = playerNumber
+                    playerNumber = playerNumber,
+                    lobbyCode = activeLobbyId ?: ""
                 )
             }
         }

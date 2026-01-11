@@ -21,7 +21,8 @@ import kotlin.random.Random
 @Composable
 fun GameScreen(
     webSocketManager: WebSocketManager,
-    playerNumber: Int
+    playerNumber: Int,
+    lobbyCode: String = ""
 ) {
     // STATE
     var score1 by remember { mutableIntStateOf(0) }
@@ -75,9 +76,9 @@ fun GameScreen(
                 .drawWithCache {
                     val w = size.width
                     val h = size.height
-
+                    
                     val halfW = GameCoordinates.TableDims.WIDTH / 2
-                    val halfL = GameCoordinates.TableDims.LENGTH / 2
+                    val halfL = GameCoordinates.TableDims.LENGTH / 2                    
                     val netHeight = GameCoordinates.TableDims.NET_HEIGHT
 
                     val project: Projector = { x, y, z ->
@@ -113,7 +114,7 @@ fun GameScreen(
                 }
         )
 
-        ScoreOverlay(score1, score2, playerNumber)
+        ScoreOverlay(score1, score2, playerNumber, lobbyCode)
         BigMessageOverlay(scoreMessage)
     }
 }
