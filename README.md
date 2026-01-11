@@ -159,6 +159,7 @@ Before installing PhonePong, ensure you have the following installed:
 Before running the application, you need to configure the IP addresses across all components to match your local network setup:
 
 1. **Find Your Local IP Address**:
+
    - Windows: Run `ipconfig` in PowerShell and look for IPv4 Address
    - macOS/Linux: Run `ifconfig` or `ip addr` and look for your local network IP
 
@@ -166,7 +167,7 @@ Before running the application, you need to configure the IP addresses across al
 
    - **Server Configuration**: `Server/config/config.ts` - Update the server host IP if needed
    - **Web Display WebSocket URL**: `web/composeApp/src/commonMain/kotlin/org/tabletennis/project/network/WebSocketManager.kt` - Update the WebSocket server URL to `wss://YOUR_IP:3000`
-   - **Mobile Controller WebSocket URL**: `mobile/composeApp/src/commonMain/kotlin/com/example/insanecrossmobilepingpongapp/model/ControllerState.kt` - Update the default server URL to `wss://YOUR_IP:3000`
+   - **Mobile Controller WebSocket URL**: `mobile/composeApp/src/commonMain/kotlin/com/example/phonepong/model/ControllerState.kt` - Update the default server URL to `wss://YOUR_IP:3000`
 
 3. **Example Configuration**:
    - If your computer's IP is `192.168.1.100`, use `wss://192.168.1.100:3000` as the WebSocket URL
@@ -189,8 +190,7 @@ npm install
 
 3. Generate SSL certificates (required for HTTPS/WSS connections from mobile devices):
 
-This step is only needed to be able to run the mobile version in the browser as iOS only allows access to sensordata in an https context. On native devices you can run the full setup over http. 
-
+This step is only needed to be able to run the mobile version in the browser as iOS only allows access to sensordata in an https context. On native devices you can run the full setup over http.
 
 4. (Optional) Configure server settings by editing `config/config.ts`:
 
@@ -241,7 +241,7 @@ cd mobile
 
 2. Update server configuration:
 
-Edit the default server URL in `mobile/composeApp/src/commonMain/kotlin/com/example/insanecrossmobilepingpongapp/model/ControllerState.kt` if needed.
+Edit the default server URL in `mobile/composeApp/src/commonMain/kotlin/com/example/phonepong/model/ControllerState.kt` if needed.
 
 3. **For Android**:
 
@@ -444,7 +444,6 @@ Server-side physics simulation includes:
 - **Delta Compression**: Only changed values are transmitted
 - **Minimal Payloads**: Swing events contain only essential data
 - **Adaptive Update Rate**: Server adjusts update frequency based on game state
-
 
 ## License
 

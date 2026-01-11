@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		7FE342E1C34DF18B48C72A86 /* insanecrossmobilepingpongapp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = insanecrossmobilepingpongapp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7FE342E1C34DF18B48C72A86 /* phonepong.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = phonepong.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -50,7 +50,7 @@
 		4A2F5299DCBA4B2C9D3C6584 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				7FE342E1C34DF18B48C72A86 /* insanecrossmobilepingpongapp.app */,
+				7FE342E1C34DF18B48C72A86 /* phonepong.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -87,7 +87,7 @@
 			packageProductDependencies = (
 			);
 			productName = iosApp;
-			productReference = 7FE342E1C34DF18B48C72A86 /* insanecrossmobilepingpongapp.app */;
+			productReference = 7FE342E1C34DF18B48C72A86 /* phonepong.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
