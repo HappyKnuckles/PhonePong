@@ -1,4 +1,4 @@
-rootProject.name = "insanecrossmobilepingpongapp"
+rootProject.name = "PhonePong-Controller"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

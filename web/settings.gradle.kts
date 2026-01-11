@@ -1,4 +1,4 @@
-rootProject.name = "PingPong"
+rootProject.name = "PhonePong-View"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

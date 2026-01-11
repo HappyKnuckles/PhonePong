@@ -1,0 +1,85 @@
+package com.example.phonepong
+
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.example.phonepong.controller.ControllerViewModel
+import com.example.phonepong.model.Screen
+import com.example.phonepong.sensor.MotionSensor
+import com.example.phonepong.sensor.createMotionSensor
+import com.example.phonepong.ui.DebugOverlay
+import com.example.phonepong.ui.GameScreen
+import com.example.phonepong.ui.MenuScreen
+import com.example.phonepong.ui.WaitingScreen
+
+@Composable
+@Preview
+fun App(
+    motionSensor: MotionSensor = remember { createMotionSensor() }
+) {
+    // Theme state
+    var isDarkTheme by remember { mutableStateOf(true) }
+
+    // Define colors based on theme
+    val colorScheme = if (isDarkTheme) {
+        androidx.compose.material3.darkColorScheme()
+    } else {
+        androidx.compose.material3.lightColorScheme()
+    }
+
+    MaterialTheme(colorScheme = colorScheme) {
+        // Create view model with injected sensor
+        val viewModel = remember { ControllerViewModel(motionSensor) }
+
+        // Observe UI state
+        val state by viewModel.state.collectAsStateWithLifecycle()
+
+        // Navigation based on current screen
+        when (state.currentScreen) {
+            Screen.Menu -> {
+                MenuScreen(
+                    onJoinLobby = { lobbyId, playerRole ->
+                        viewModel.joinLobby(lobbyId, playerRole)
+                    },
+                    isDarkTheme = isDarkTheme,
+                    onThemeToggle = { isDarkTheme = it }
+                )
+            }
+
+            Screen.Waiting -> {
+                WaitingScreen(
+                    playerRole = state.playerRole,
+                    lobbyId = state.lobbyId,
+                    isDarkTheme = isDarkTheme
+                )
+            }
+
+            Screen.Game -> {
+                // Ensure player role is set before showing game screen
+                state.playerRole?.let { playerRole ->
+                    GameScreen(
+                        playerRole = playerRole,
+                        connectionState = state.connectionState,
+                        isDebugVisible = state.isDebugVisible,
+                        onToggleDebug = { viewModel.toggleDebug() },
+                        onDisconnect = { viewModel.disconnectAndReturnToMenu() },
+                        debugContent = {
+                            DebugOverlay(
+                                connectionState = state.connectionState,
+                                serverUrl = state.serverUrl,
+                                isCalibrated = state.isCalibrated,
+                                isActive = state.isActive,
+                                paddleControl = state.currentControl,
+                                onCalibrate = { viewModel.calibrate() },
+                                onClose = { viewModel.toggleDebug() }
+                            )
+                        },
+                        isDarkTheme = isDarkTheme,
+                        lobbyCode = state.lobbyId
+                    )
+                }
+            }
+        }
+    }
+}

@@ -33,7 +33,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
-            freeCompilerArgs += listOf("-Xbinary=bundleId=com.example.insanecrossmobilepingpongapp")
+            freeCompilerArgs += listOf("-Xbinary=bundleId=com.example.phonepong")
         }
     }
 
@@ -74,11 +74,11 @@ kotlin {
 }
 
 android {
-    namespace = "com.example.insanecrossmobilepingpongapp"
+    namespace = "com.example.phonepong"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.example.insanecrossmobilepingpongapp"
+        applicationId = "com.example.phonepong"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
