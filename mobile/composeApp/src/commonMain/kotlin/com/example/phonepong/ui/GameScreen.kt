@@ -19,11 +19,11 @@ import com.example.phonepong.model.PlayerRole
 import com.example.phonepong.network.ConnectionState
 import com.example.phonepong.ui.components.LobbyCodeBadge
 import org.jetbrains.compose.resources.painterResource
-import phonepong.composeapp.generated.resources.Res
-import phonepong.composeapp.generated.resources.racket_black
-import phonepong.composeapp.generated.resources.racket_red
+import phonepong_controller.composeapp.generated.resources.Res
+import phonepong_controller.composeapp.generated.resources.racket_black
+import phonepong_controller.composeapp.generated.resources.racket_red
 import org.jetbrains.compose.resources.stringResource
-import phonepong.composeapp.generated.resources.*
+import phonepong_controller.composeapp.generated.resources.*
 
 /**
  * Game screen showing the racket view and connection status.

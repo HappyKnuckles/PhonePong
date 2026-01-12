@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.phonepong.model.PlayerRole
 import org.jetbrains.compose.resources.stringResource
-import phonepong.composeapp.generated.resources.*
+import phonepong_controller.composeapp.generated.resources.*
 
 @Composable
 fun WaitingScreen(

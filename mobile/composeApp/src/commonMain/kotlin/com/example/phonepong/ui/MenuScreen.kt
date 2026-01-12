@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.example.phonepong.model.PlayerRole
 import com.example.phonepong.sensor.needsMotionPermissionRequest
 import org.jetbrains.compose.resources.stringResource
-import phonepong.composeapp.generated.resources.*
+import phonepong_controller.composeapp.generated.resources.*
 
 var requestMotionPermissionHandler: ((Boolean) -> Unit) -> Unit = { callback ->
     callback(true)
