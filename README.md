@@ -87,8 +87,7 @@ The system consists of three independent components:
 │  (Display H2)   │ ◀───WebSocket┘
 └─────────────────┘
 
-Note: The display can be shown on one or multiple devices/browsers simultaneously.
-Each display device will show the same game state in real-time.
+Note: The display can be shown on one or multiple devices simultaneously.
 ```
 
 ## Platform Support
@@ -445,9 +444,6 @@ Server-side physics simulation includes:
 - **Minimal Payloads**: Swing events contain only essential data
 - **Adaptive Update Rate**: Server adjusts update frequency based on game state
 
-## License
-
-This project is available under the MIT License. See individual component README files for more details.
 
 ## Troubleshooting
 
