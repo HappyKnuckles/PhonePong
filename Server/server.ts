@@ -8,6 +8,18 @@ import socketHandler from './src/handlers/SocketHandler';
 
 const app = express();
 
+app.get('/health', (req, res) => {
+  res.send('ok');
+});
+
+// In the container, the built screen (web) and browser controller (mobile js) are served from here too:
+// the screen at /, the controller at /controller/. Locally PUBLIC_DIR is unset and / shows the certificate page.
+const publicDir = process.env.PUBLIC_DIR;
+if (publicDir) {
+  app.use('/controller', express.static(path.join(publicDir, 'controller')));
+  app.use(express.static(path.join(publicDir, 'screen')));
+}
+
 // Serve a simple page to help accept the certificate on mobile devices
 app.get('/', (req, res) => {
   res.send(`
