@@ -1,0 +1,142 @@
+name: Deploy
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/happyknuckles/phonepong
+
+jobs:
+  web:
+    # screen (web, wasm) and browser controller (mobile, js) as static files for the image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          # a fixed Gradle instead of ./gradlew: mobile/ has no committed wrapper jar
+          gradle-version: 8.14.3
+
+      - name: Screen
+        run: gradle -p web :composeApp:wasmJsBrowserDistribution
+
+      - name: Browser controller
+        # the mobile project also has the Android target, so this uses the runner's Android SDK
+        run: gradle -p mobile :composeApp:jsBrowserDistribution
+
+      - name: Collect
+        run: |
+          mkdir dist
+          cp -r web/composeApp/build/dist/wasmJs/productionExecutable dist/screen
+          cp -r mobile/composeApp/build/dist/js/productionExecutable dist/controller
+          test -f dist/screen/index.html && test -f dist/controller/index.html
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: dist
+          retention-days: 7
+
+  image:
+    needs: web
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: web
+          path: dist
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Smoke test
+        # the server starts and serves health, screen, controller and the WebSocket
+        run: |
+          docker buildx build --platform linux/amd64 --load -t phonepong:test .
+          docker run -d --name pong -p 3000:3000 phonepong:test
+          for i in $(seq 1 20); do curl -fs http://localhost:3000/health && break; sleep 1; done
+          curl -fs http://localhost:3000/ | grep -q composeApp.js
+          curl -fsL http://localhost:3000/controller | grep -q phonepong-controller.js
+          docker exec pong node -e "
+            const ws = new (require('ws'))('ws://127.0.0.1:3000/ws?token=host&action=create');
+            ws.on('message', (m) => { console.log(String(m)); process.exit(String(m).includes('lobby_created') ? 0 : 1); });
+            ws.on('error', (e) => { console.error(e.message); process.exit(1); });
+            setTimeout(() => process.exit(1), 5000);
+          "
+
+      - uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          # amd64 and arm64, so it also runs on an ARM VPS (e.g. Oracle's free Ampere instances)
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  rollout:
+    # Caddy and the compose file on the server come from lightningbowl-ball-tracker's deploy/ (/opt/lightningbowl)
+    needs: image
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+    steps:
+      - name: Skip without a server
+        if: env.VPS_HOST == ''
+        run: echo "::notice::VPS_HOST is not set, image pushed but not deployed."
+
+      - name: SSH key
+        if: env.VPS_HOST != ''
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          printf 'Host vps\n  HostName %s\n  User deploy\n  IdentityFile ~/.ssh/id_deploy\n' "$VPS_HOST" > ~/.ssh/config
+
+      - name: Roll out
+        if: env.VPS_HOST != ''
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh vps 'docker login ghcr.io -u ${{ github.actor }} --password-stdin'
+          ssh vps 'cd /opt/lightningbowl && docker compose pull phonepong && docker compose up -d phonepong && docker image prune -f'
