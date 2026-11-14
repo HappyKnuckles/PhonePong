@@ -371,7 +371,7 @@ private fun ConnectionDialog(
                     value = url,
                     onValueChange = { url = it },
                     label = { Text("Server URL") },
-                    placeholder = { Text("wss://131.159.222.93:3000") },
+                    placeholder = { Text("wss://pong.nicolas-hoffmann.dev/ws") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )

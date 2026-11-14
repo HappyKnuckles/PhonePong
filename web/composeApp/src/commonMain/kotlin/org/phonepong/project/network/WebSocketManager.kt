@@ -37,8 +37,10 @@ data class ScoreEvent(
 
 class WebSocketManager {
 
-    private val serverUrl = "192.168.178.85" // 10.0.2.2 for emulator
-    private val serverPort = 3000
+    // The server on the VPS, behind Caddy. Locally: your machine's IP (10.0.2.2 for the emulator), port 3000, path "/".
+    private val serverUrl = "pong.nicolas-hoffmann.dev"
+    private val serverPort = 443
+    private val serverPath = "/ws"
     private val useSecure = true // Use wss:// for HTTPS compatibility
 
     private val _bothPlayersConnected = MutableStateFlow(false)
@@ -91,12 +93,12 @@ class WebSocketManager {
 
         connectionJob = scope.launch {
             try {
-                println("🔌 Connecting to WebSocket: wss://$serverUrl:$serverPort (Singleplayer: $isSingleplayer)")
+                println("🔌 Connecting to WebSocket: wss://$serverUrl:$serverPort$serverPath (Singleplayer: $isSingleplayer)")
                 client.webSocket(
                     method = HttpMethod.Get,
                     host = serverUrl,
                     port = serverPort,
-                    path = "/",
+                    path = serverPath,
                     request = {
                         // Use wss:// for secure WebSocket connection
                         url.protocol = if (useSecure) io.ktor.http.URLProtocol.WSS else io.ktor.http.URLProtocol.WS

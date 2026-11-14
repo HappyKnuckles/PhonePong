@@ -31,7 +31,7 @@ enum class ConnectionState {
 
 /**
  * WebSocket client for sending swing event data to backend.
- * Production server: ws://131.159.222.93:3000
+ * Production server: wss://pong.nicolas-hoffmann.dev/ws
  */
 class WebSocketClient {
     private val client = HttpClient {
@@ -55,7 +55,7 @@ class WebSocketClient {
     /**
      * Connect to WebSocket server.
      *
-     * @param url WebSocket server URL (e.g., "ws://131.159.222.93:3000")
+     * @param url WebSocket server URL (e.g., "wss://pong.nicolas-hoffmann.dev/ws")
      * @param token Token for role (use "player" for auto-assign)
      * @param lobbyId Optional lobby ID to join
      */
