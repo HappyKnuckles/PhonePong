@@ -77,7 +77,7 @@ jobs:
         run: |
           docker buildx build --platform linux/amd64 --load -t phonepong:test .
           docker run -d --name pong -p 3000:3000 phonepong:test
-          for i in $(seq 1 20); do curl -fs http://localhost:3000/health && break; sleep 1; done
+          for _ in $(seq 1 20); do curl -fs http://localhost:3000/health && break; sleep 1; done
           curl -fs http://localhost:3000/ | grep -q composeApp.js
           curl -fsL http://localhost:3000/controller | grep -q phonepong-controller.js
           docker exec pong node -e "
@@ -108,7 +108,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   rollout:
-    # Caddy and the compose file on the server come from lightningbowl-ball-tracker's deploy/ (/opt/lightningbowl)
+    # Caddy and the compose file on the server come from HappyKnuckles/vps (/opt/apps)
     needs: image
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -139,4 +139,4 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           printf '%s' "$GHCR_TOKEN" | ssh vps 'docker login ghcr.io -u ${{ github.actor }} --password-stdin'
-          ssh vps 'cd /opt/lightningbowl && docker compose pull phonepong && docker compose up -d phonepong && docker image prune -f'
+          ssh vps 'cd /opt/apps && docker compose pull phonepong && docker compose up -d phonepong && docker image prune -f'

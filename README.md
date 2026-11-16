@@ -358,12 +358,12 @@ The Node server serves the screen and the browser controller itself (from `PUBLI
 2. The [Dockerfile](Dockerfile) puts them into the server image, for amd64 and arm64. On pull requests the image is only built and smoke-tested (health, both pages, a WebSocket lobby).
 3. On `master` the image goes to `ghcr.io/happyknuckles/phonepong`, and the server pulls and restarts it over SSH.
 
-**Server side:** Caddy and the compose file live in [lightningbowl-ball-tracker](https://github.com/HappyKnuckles/lightningbowl-ball-tracker) `deploy/` (`/opt/lightningbowl` on the server), with a `phonepong` service and a `pong.nicolas-hoffmann.dev` site.
+**Server side:** Caddy and the compose file live in [HappyKnuckles/vps](https://github.com/HappyKnuckles/vps) (`/opt/apps` on the server), with a `phonepong` service and a `pong.nicolas-hoffmann.dev` site.
 
 **One-time setup:**
 
 - DNS: an `A` record for `pong.nicolas-hoffmann.dev` to the VPS IP.
-- Repository secrets (Settings → Secrets → Actions): `VPS_HOST` and `VPS_SSH_KEY`, the same as in lightningbowl-ball-tracker. Without `VPS_HOST`, the image is pushed but not rolled out.
+- Repository secrets (Settings → Secrets → Actions): `VPS_HOST` and `VPS_SSH_KEY`, the same as in the vps repo. Without `VPS_HOST`, the image is pushed but not rolled out.
 
 **Building the image by hand:**
 
