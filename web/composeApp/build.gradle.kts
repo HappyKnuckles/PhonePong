@@ -77,7 +77,7 @@ kotlin {
 
 compose.desktop {
     application {
-        mainClass = "org.tabletennis.project.MainKt"
+        mainClass = "org.phonepong.project.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)

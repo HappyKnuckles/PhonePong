@@ -14,6 +14,7 @@ A real-time multiplayer ping pong game that transforms your smartphone into a mo
   - [Web Display Setup](#web-display-setup)
   - [Mobile Controller Setup](#mobile-controller-setup)
 - [Running the Application](#running-the-application)
+- [Deployment](#deployment)
 - [How to Play](#how-to-play)
 - [Technical Details](#technical-details)
 - [Project Structure](#project-structure)
@@ -155,7 +156,7 @@ Before installing PhonePong, ensure you have the following installed:
 
 ### Important: Network Configuration
 
-Before running the application, you need to configure the IP addresses across all components to match your local network setup:
+The clients point at the hosted server (`wss://pong.nicolas-hoffmann.dev/ws`, see [Deployment](#deployment)). To run everything on your own network instead, configure the IP addresses across all components to match your local network setup:
 
 1. **Find Your Local IP Address**:
 
@@ -165,7 +166,7 @@ Before running the application, you need to configure the IP addresses across al
 2. **Update IP Addresses in the Following Files**:
 
    - **Server Configuration**: `Server/config/config.ts` - Update the server host IP if needed
-   - **Web Display WebSocket URL**: `web/composeApp/src/commonMain/kotlin/org/tabletennis/project/network/WebSocketManager.kt` - Update the WebSocket server URL to `wss://YOUR_IP:3000`
+   - **Web Display WebSocket URL**: `web/composeApp/src/commonMain/kotlin/org/phonepong/project/network/WebSocketManager.kt` - Set `serverUrl` to `YOUR_IP`, `serverPort` to `3000` and `serverPath` to `/`
    - **Mobile Controller WebSocket URL**: `mobile/composeApp/src/commonMain/kotlin/com/example/phonepong/model/ControllerState.kt` - Update the default server URL to `wss://YOUR_IP:3000`
 
 3. **Example Configuration**:
@@ -338,6 +339,43 @@ cd mobile
 ```
 
 The controller interface will open in your browser. Note that motion sensors may require HTTPS and user permission on iOS devices.
+
+## Deployment
+
+PhonePong runs at **https://pong.nicolas-hoffmann.dev** as one container on the VPS:
+
+| URL | What |
+| --- | --- |
+| `https://pong.nicolas-hoffmann.dev/` | Screen (web display) |
+| `https://pong.nicolas-hoffmann.dev/controller/` | Controller in the browser |
+| `wss://pong.nicolas-hoffmann.dev/ws` | WebSocket server, for the screen and the Android/iOS controller |
+
+The Node server serves the screen and the browser controller itself (from `PUBLIC_DIR`). Caddy in front of it provides HTTPS, so no self-signed certificates are needed, and iOS allows the motion sensors.
+
+**Pipeline** ([deploy.yml](.github/workflows/deploy.yml)):
+
+1. Gradle builds the screen (`web`, wasm) and the browser controller (`mobile`, js).
+2. The [Dockerfile](Dockerfile) puts them into the server image, for amd64 and arm64. On pull requests the image is only built and smoke-tested (health, both pages, a WebSocket lobby).
+3. On `master` the image goes to `ghcr.io/happyknuckles/phonepong`, and the server pulls and restarts it over SSH.
+
+**Server side:** Caddy and the compose file live in [HappyKnuckles/vps](https://github.com/HappyKnuckles/vps) (`/opt/apps` on the server), with a `phonepong` service and a `pong.nicolas-hoffmann.dev` site.
+
+**One-time setup:**
+
+- DNS: an `A` record for `pong.nicolas-hoffmann.dev` to the VPS IP.
+- Repository secrets (Settings → Secrets → Actions): `VPS_HOST` and `VPS_SSH_KEY`, the same as in the vps repo. Without `VPS_HOST`, the image is pushed but not rolled out.
+
+**Building the image by hand:**
+
+```bash
+(cd web && ./gradlew :composeApp:wasmJsBrowserDistribution)
+(cd mobile && gradle :composeApp:jsBrowserDistribution)   # mobile/ has no wrapper jar
+mkdir -p dist
+cp -r web/composeApp/build/dist/wasmJs/productionExecutable dist/screen
+cp -r mobile/composeApp/build/dist/js/productionExecutable dist/controller
+docker build -t phonepong .
+docker run -p 3000:3000 phonepong   # http://localhost:3000, ws://localhost:3000/ws
+```
 
 ## How to Play
 

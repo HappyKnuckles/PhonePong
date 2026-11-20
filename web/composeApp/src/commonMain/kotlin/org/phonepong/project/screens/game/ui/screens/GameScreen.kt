@@ -19,7 +19,7 @@ import org.phonepong.project.screens.game.render.drawBall
 import org.phonepong.project.screens.game.ui.components.BigMessageOverlay
 import org.phonepong.project.screens.game.ui.components.ScoreOverlay
 import org.phonepong.project.network.WebSocketManager
-import org.tabletennis.project.screens.game.render.*
+import org.phonepong.project.screens.game.render.*
 import kotlin.random.Random
 
 @Composable

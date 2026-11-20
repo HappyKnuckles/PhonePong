@@ -7,7 +7,8 @@ config.watchOptions = config.watchOptions || {
     ignored: ["**/*.kt", "**/node_modules"]
 }
 
-if (config.devServer) {
+// devServer.js always creates config.devServer, also for production builds, where it has no static list
+if (config.devServer && config.devServer.static) {
     config.devServer.static = config.devServer.static.map(file => {
         if (typeof file === "string") {
             return {

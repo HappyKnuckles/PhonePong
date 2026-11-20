@@ -1,0 +1,6 @@
+*
+!Server
+!dist
+Server/node_modules
+Server/dist
+Server/certs
