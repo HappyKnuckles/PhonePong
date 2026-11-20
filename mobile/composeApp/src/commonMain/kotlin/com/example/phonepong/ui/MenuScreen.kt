@@ -1,6 +1,7 @@
 package com.example.phonepong.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -35,6 +36,8 @@ fun MenuScreen(
     modifier: Modifier = Modifier
 ) {
     var lobbyCode by remember { mutableStateOf("") }
+    val onLobbyCodeChange: (String) -> Unit = { lobbyCode = it.uppercase().filter { char -> char.isLetter() }.take(4) }
+    val lobbyCodeInteraction = remember { MutableInteractionSource() }
     var selectedRole by remember { mutableStateOf<PlayerRole?>(null) }
     
     // Initial check
@@ -130,9 +133,10 @@ fun MenuScreen(
                 // Lobby Code Input
                 OutlinedTextField(
                     value = lobbyCode,
-                    onValueChange = { 
-                        lobbyCode = it.uppercase().filter { char -> char.isLetter() }.take(4)
-                    },
+                    onValueChange = onLobbyCodeChange,
+                    // in the browser the invisible HTML input from nativeTextInput takes the typing
+                    readOnly = needsNativeTextInput,
+                    interactionSource = lobbyCodeInteraction,
                     label = { Text("Lobby Code") },
                     placeholder = { Text("ABCD", fontSize = 28.sp) },
                     singleLine = true,
@@ -153,7 +157,9 @@ fun MenuScreen(
                         letterSpacing = 8.sp
                     ),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .nativeTextInput(lobbyCode, onLobbyCodeChange, lobbyCodeInteraction, maxLength = 4)
                 )
 
                 // Player Selection Section
