@@ -45,7 +45,9 @@ actual fun Modifier.nativeTextInput(
         input.addEventListener("keydown", { event ->
             if ((event as KeyboardEvent).key == "Enter") input.blur()
         })
-        document.body?.appendChild(input)
+        // Not into <body>: Compose attaches a shadow root to it, and children of a shadow host that no slot
+        // takes in aren't rendered at all (the input stayed 0×0 and never got the tap). <html> is fine.
+        document.documentElement?.appendChild(input)
         onDispose {
             focus?.let { interactionSource.tryEmit(FocusInteraction.Unfocus(it)) }
             input.remove()
