@@ -1,0 +1,85 @@
+name: probe-keyboard
+on:
+  push:
+    branches: [probe-keyboard]
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: 8.14.3
+      - name: build controller
+        run: |
+          gradle -p mobile :composeApp:jsBrowserDistribution > gradle.log 2>&1 || { tail -30 gradle.log | sed 's/^/::notice title=gradle::/'; exit 1; }
+          ls mobile/composeApp/build/dist/js/productionExecutable | sed 's/^/::notice title=dist::/'
+          (cd mobile/composeApp/build/dist/js/productionExecutable && nohup python3 -m http.server 8099 > /dev/null 2>&1 &)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: install
+        run: |
+          npm init -y > /dev/null
+          npm i playwright@1.56.1 > npm.log 2>&1 || { tail -15 npm.log | sed 's/^/::notice title=npm::/'; exit 1; }
+          npx playwright install --with-deps webkit chromium > pw.log 2>&1 || { tail -25 pw.log | sed 's/^/::notice title=pw-install::/'; exit 1; }
+      - name: probe
+        run: |
+          cat > probe.cjs <<'JS'
+          const { webkit, chromium, devices } = require('playwright');
+          const note = (t, m) => console.log(`::notice title=${t}::${String(m).replace(/\n/g, '%0A').slice(0, 3000)}`);
+          (async () => {
+            for (const [name, type, dev] of [['webkit-iphone', webkit, devices['iPhone 13']], ['chromium-pixel', chromium, devices['Pixel 7']]]) {
+              const browser = await type.launch();
+              const page = await (await browser.newContext({ ...dev })).newPage();
+              const logs = [];
+              page.on('console', (m) => logs.push(m.type() + ': ' + m.text().slice(0, 150)));
+              page.on('pageerror', (e) => logs.push('PAGEERROR ' + e.message.slice(0, 200)));
+              await page.addInitScript(() => {
+                window.__ev = [];
+                for (const t of ['touchstart', 'touchend', 'pointerdown', 'pointerup', 'mousedown', 'click', 'focusin']) {
+                  window.addEventListener(t, (e) => window.__ev.push(`${t} target=${e.target.tagName} prevented=${e.defaultPrevented}`), false);
+                }
+                const orig = Event.prototype.preventDefault;
+                Event.prototype.preventDefault = function () { if (/touch|pointer|mouse/.test(this.type)) window.__ev.push(`preventDefault ${this.type} on ${this.target && this.target.tagName} by ${(new Error().stack || '').split('\n')[2]}`); return orig.call(this); };
+              });
+              await page.goto('http://localhost:8099/', { waitUntil: 'networkidle' });
+              await page.waitForTimeout(4000);
+              const info = await page.evaluate(() => {
+                const inp = document.querySelector('input[maxlength="4"]');
+                const r = inp && inp.getBoundingClientRect();
+                const cx = r ? r.left + r.width / 2 : 0, cy = r ? r.top + r.height / 2 : 0;
+                const top = r ? document.elementFromPoint(cx, cy) : null;
+                const describe = (el) => el ? el.tagName + (el.id ? '#' + el.id : '') + ' z=' + getComputedStyle(el).zIndex + ' pos=' + getComputedStyle(el).position : 'none';
+                return {
+                  input: !!inp, rect: r && [r.left, r.top, r.width, r.height].map(Math.round), dpr: devicePixelRatio, vw: innerWidth, vh: innerHeight,
+                  atCenter: describe(top), bodyChildren: [...document.body.children].map(describe).join(' | '),
+                  canvases: [...document.querySelectorAll('canvas')].map((c) => describe(c) + ' ' + c.width + 'x' + c.height).join(' | '),
+                  shadow: document.body.shadowRoot ? [...document.body.shadowRoot.children].map(describe).join(',') : 'no body shadow',
+                  htmlChildren: [...document.documentElement.children].map(describe).join(' | '),
+                  cx, cy,
+                };
+              });
+              note(name + ' layout', JSON.stringify(info));
+              await page.screenshot({ path: name + '.png' });
+              if (info.input) {
+                await page.evaluate(() => (window.__ev = []));
+                await page.touchscreen.tap(info.cx, info.cy);
+                await page.waitForTimeout(800);
+                const after = await page.evaluate(() => ({ active: document.activeElement && (document.activeElement.tagName + ' maxlength=' + document.activeElement.getAttribute('maxlength')), ev: window.__ev }));
+                note(name + ' after tap', JSON.stringify(after));
+                await page.keyboard.type('abcd');
+                await page.waitForTimeout(500);
+                note(name + ' typed', JSON.stringify(await page.evaluate(() => ({ value: document.querySelector('input[maxlength="4"]').value, active: document.activeElement && document.activeElement.tagName }))));
+              }
+              note(name + ' console', logs.slice(-15).join('\n'));
+              await browser.close();
+            }
+          })().catch((e) => { note('error', e.stack); process.exit(1); });
+          JS
+          node probe.cjs > out.log 2>&1; code=$?; cat out.log; grep -v '^::' out.log | tail -20 | sed 's/^/::notice title=stdout::/'; exit $code
