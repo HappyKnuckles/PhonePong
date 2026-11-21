@@ -1,0 +1,40 @@
+name: probe-blank
+on:
+  push:
+    branches: [probe-blank]
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: http
+        run: |
+          for u in / /controller/ /health; do echo "::notice title=GET $u::$(curl -s -o /dev/null -w '%{http_code} %{content_type} %{size_download}B' https://pong.nicolas-hoffmann.dev$u)"; done
+          echo "::notice title=index::$(curl -s https://pong.nicolas-hoffmann.dev/ | tr '\n' ' ' | head -c 1500)"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: browser
+        run: |
+          npm init -y > /dev/null && npm i playwright@1.56.1 > /dev/null 2>&1 && npx playwright install --with-deps chromium webkit > /dev/null 2>&1
+          cat > p.cjs <<'JS'
+          const { chromium, webkit, devices } = require('playwright');
+          (async () => {
+            for (const [name, type, dev] of [['chromium-desktop', chromium, { viewport: { width: 1280, height: 800 }, locale: 'de-DE' }], ['webkit-iphone', webkit, { ...devices['iPhone 13'], locale: 'de-DE' }], ['chromium-pixel', chromium, { ...devices['Pixel 7'], locale: 'de-DE' }]]) {
+              for (const path of ['/', '/controller/']) {
+                const b = await type.launch(); const p = await (await b.newContext(dev)).newPage();
+                const logs = [];
+                p.on('console', (m) => { if (m.type() !== 'log' && m.type() !== 'debug') logs.push(m.type() + ': ' + m.text().slice(0, 300)); });
+                p.on('pageerror', (e) => logs.push('PAGEERROR ' + e.message.slice(0, 300) + ' @ ' + (e.stack || '').split('\n').slice(1, 4).join(' | ').slice(0, 400)));
+                p.on('requestfailed', (r) => logs.push('REQFAIL ' + r.url().slice(0, 120) + ' ' + r.failure()?.errorText));
+                p.on('response', (r) => { if (r.status() >= 400) logs.push('HTTP ' + r.status() + ' ' + r.url().slice(0, 120)); });
+                await p.goto('https://pong.nicolas-hoffmann.dev' + path, { waitUntil: 'networkidle' }).catch((e) => logs.push('GOTO ' + e.message));
+                await p.waitForTimeout(4000);
+                const info = await p.evaluate(() => ({ canvases: document.querySelectorAll('canvas').length + (document.body.shadowRoot ? document.body.shadowRoot.querySelectorAll('canvas').length : 0), shadow: !!document.body.shadowRoot, text: document.body.innerText.slice(0, 100) }));
+                console.log(`::notice title=${name} ${path}::${JSON.stringify(info)} || ${logs.slice(0, 12).join(' || ')}`.slice(0, 3500));
+                await b.close();
+              }
+            }
+          })();
+          JS
+          node p.cjs
