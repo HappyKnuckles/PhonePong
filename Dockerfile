@@ -2,6 +2,7 @@
 # controller at /controller/. Both web parts are built with Gradle before `docker build`
 # (the Deploy workflow does that):
 #   dist/screen      <- web:    gradle :composeApp:wasmJsBrowserDistribution
+#   dist/screen/js   <- web:    gradle :composeApp:jsBrowserDistribution (fallback without WebAssembly GC)
 #   dist/controller  <- mobile: gradle :composeApp:jsBrowserDistribution
 
 FROM --platform=$BUILDPLATFORM node:22-alpine AS build

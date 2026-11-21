@@ -35,7 +35,8 @@ jobs:
           gradle-version: 8.14.3
 
       - name: Screen
-        run: gradle -p web :composeApp:wasmJsBrowserDistribution
+        # Wasm for current browsers, JS for the ones without WebAssembly GC (older iPads and iPhones)
+        run: gradle -p web :composeApp:wasmJsBrowserDistribution :composeApp:jsBrowserDistribution
 
       - name: Browser controller
         # the mobile project also has the Android target, so this uses the runner's Android SDK
@@ -45,8 +46,9 @@ jobs:
         run: |
           mkdir dist
           cp -r web/composeApp/build/dist/wasmJs/productionExecutable dist/screen
+          cp -r web/composeApp/build/dist/js/productionExecutable dist/screen/js
           cp -r mobile/composeApp/build/dist/js/productionExecutable dist/controller
-          test -f dist/screen/index.html && test -f dist/controller/index.html
+          test -f dist/screen/index.html && test -f dist/screen/js/index.html && test -f dist/controller/index.html
 
       - uses: actions/upload-artifact@v4
         with:

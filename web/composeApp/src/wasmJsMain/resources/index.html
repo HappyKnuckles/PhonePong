@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhonePong</title>
+    <link type="text/css" rel="stylesheet" href="styles.css">
+    <script>
+        // The screen runs on Kotlin/Wasm, which needs WebAssembly GC (Safari 18.2+, Chrome 119+, Firefox 120+).
+        // Browsers without it (older iPads and iPhones) get the JS build in js/ instead. ?js forces it.
+        (function () {
+            var useJs = function () {
+                location.replace('js/' + location.search + location.hash);
+            };
+            var supportsWasmGc = function () {
+                try {
+                    // a module with a single GC struct type: valid only where WebAssembly GC is supported
+                    return WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 95, 1, 120, 0]));
+                } catch (e) {
+                    return false;
+                }
+            };
+            if (/[?&]js\b/.test(location.search) || typeof WebAssembly === 'undefined' || !supportsWasmGc()) {
+                useJs();
+                return;
+            }
+            // GC alone isn't everything the Wasm build needs: if it still can't be compiled or linked, switch too
+            var onWasmFailure = function (error) {
+                if (error instanceof WebAssembly.CompileError || error instanceof WebAssembly.LinkError) useJs();
+            };
+            window.addEventListener('unhandledrejection', function (event) { onWasmFailure(event.reason); });
+            window.addEventListener('error', function (event) { onWasmFailure(event.error); });
+            document.write('<script src="composeApp.js"><\/script>');
+        })();
+    </script>
+</head>
+<body>
+</body>
+</html>
