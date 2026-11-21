@@ -10,6 +10,8 @@ jobs:
       - name: http
         run: |
           for u in / /controller/ /health; do echo "::notice title=GET $u::$(curl -s -o /dev/null -w '%{http_code} %{content_type} %{size_download}B' https://pong.nicolas-hoffmann.dev$u)"; done
+          for f in / /composeApp.js /controller/ /controller/phonepong-controller.js; do echo "::notice title=headers $f::$(curl -sI https://pong.nicolas-hoffmann.dev$f | grep -iE '^(HTTP|cache-control|etag|last-modified|content-length|content-type|age|expires)' | tr -d '\r' | tr '\n' '|')"; done
+          curl -s https://pong.nicolas-hoffmann.dev/controller/ | tr '\n' ' ' | head -c 700 | sed 's/^/::notice title=controller index::/'
           echo "::notice title=index::$(curl -s https://pong.nicolas-hoffmann.dev/ | tr '\n' ' ' | head -c 1500)"
       - uses: actions/setup-node@v4
         with:
@@ -30,6 +32,10 @@ jobs:
                 p.on('response', (r) => { if (r.status() >= 400) logs.push('HTTP ' + r.status() + ' ' + r.url().slice(0, 120)); });
                 await p.goto('https://pong.nicolas-hoffmann.dev' + path, { waitUntil: 'networkidle' }).catch((e) => logs.push('GOTO ' + e.message));
                 await p.waitForTimeout(4000);
+                await p.screenshot({ path: 'shot.png' });
+                const shot = require('fs').readFileSync('shot.png');
+                const info0 = await p.evaluate(async (b64) => { const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode(); const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0); const d = g.getImageData(0, 0, c.width, c.height).data; const colors = new Set(); for (let i = 0; i < d.length; i += 400) colors.add(d[i] + ',' + d[i+1] + ',' + d[i+2]); return colors.size; }, shot.toString('base64'));
+                logs.unshift('distinct colors in screenshot: ' + info0);
                 const info = await p.evaluate(() => ({ canvases: document.querySelectorAll('canvas').length + (document.body.shadowRoot ? document.body.shadowRoot.querySelectorAll('canvas').length : 0), shadow: !!document.body.shadowRoot, text: document.body.innerText.slice(0, 100) }));
                 console.log(`::notice title=${name} ${path}::${JSON.stringify(info)} || ${logs.slice(0, 12).join(' || ')}`.slice(0, 3500));
                 await b.close();
