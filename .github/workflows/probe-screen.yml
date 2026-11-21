@@ -1,0 +1,50 @@
+name: probe-screen
+on:
+  push:
+    branches: [probe-screen]
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: 8.14.3
+      - name: build
+        run: |
+          gradle -p web :composeApp:wasmJsBrowserDistribution :composeApp:jsBrowserDistribution > g.log 2>&1 || { tail -30 g.log | sed 's/^/::notice title=gradle::/'; exit 1; }
+          mkdir -p site && cp -r web/composeApp/build/dist/wasmJs/productionExecutable/. site/ && cp -r web/composeApp/build/dist/js/productionExecutable site/js
+          echo "::notice title=files::$(cd site && ls | tr '\n' ' ') || js: $(ls site/js | tr '\n' ' ')"
+          (cd site && nohup python3 -m http.server 8099 > /dev/null 2>&1 &)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: browser
+        run: |
+          npm init -y > /dev/null && npm i playwright@1.56.1 > /dev/null 2>&1 && npx playwright install --with-deps chromium webkit > /dev/null 2>&1
+          cat > p.cjs <<'JS'
+          const { chromium, webkit, devices } = require('playwright');
+          (async () => {
+            for (const [name, type, dev] of [['webkit-ipad', webkit, devices['iPad (gen 7) landscape']], ['chromium', chromium, { viewport: { width: 1280, height: 800 } }]]) {
+              for (const path of ['/', '/?js', '/js/']) {
+                const b = await type.launch(); const p = await (await b.newContext(dev)).newPage();
+                const logs = [];
+                p.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') logs.push(m.type() + ': ' + m.text().slice(0, 200)); });
+                p.on('pageerror', (e) => logs.push('PAGEERROR ' + e.message.slice(0, 300)));
+                p.on('response', (r) => { if (r.status() >= 400) logs.push('HTTP ' + r.status() + ' ' + r.url()); });
+                await p.goto('http://localhost:8099' + path, { waitUntil: 'networkidle' }).catch((e) => logs.push('GOTO ' + e.message));
+                await p.waitForTimeout(5000);
+                const shot = (await p.screenshot()).toString('base64');
+                const colors = await p.evaluate(async (b64) => { const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode(); const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0); const d = g.getImageData(0, 0, c.width, c.height).data; const s = new Set(); for (let i = 0; i < d.length; i += 400) s.add(d[i] + ',' + d[i+1] + ',' + d[i+2]); return s.size; }, shot);
+                console.log(`::notice title=${name} ${path}::url=${p.url()} colors=${colors} canvas=${await p.evaluate(() => !!(document.body.shadowRoot || document).querySelector('canvas'))} || ${logs.filter((l) => !/WebGL|GroupMarker|GPU stall|wss:|WebSocket/.test(l)).slice(0, 6).join(' || ')}`.slice(0, 2000));
+                await b.close();
+              }
+            }
+          })();
+          JS
+          node p.cjs
