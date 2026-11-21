@@ -30,7 +30,7 @@ jobs:
           cat > p.cjs <<'JS'
           const { chromium, webkit, devices } = require('playwright');
           (async () => {
-            for (const [name, type, dev] of [['webkit-ipad', webkit, devices['iPad (gen 7) landscape']], ['chromium', chromium, { viewport: { width: 1280, height: 800 } }]]) {
+            for (const [name, type, dev] of [['webkit-ipad', webkit, devices['iPad (gen 7) landscape']], ['chromium', chromium, { viewport: { width: 1280, height: 800 }, locale: 'de-DE' }]]) {
               for (const path of ['/', '/?js', '/js/']) {
                 const b = await type.launch(); const p = await (await b.newContext(dev)).newPage();
                 const logs = [];
